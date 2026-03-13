@@ -1,0 +1,13 @@
+{
+  "ver": "2.0.4",
+  "importer": "animation-clip",
+  "imported": true,
+  "uuid": "a3e0a68e-809e-4f6d-9dc3-6633f9ac2f37",
+  "files": [
+    ".bin"
+  ],
+  "subMetas": {},
+  "userData": {
+    "name": "BlockDestroyAnimation"
+  }
+}
