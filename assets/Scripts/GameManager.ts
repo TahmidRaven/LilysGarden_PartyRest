@@ -135,14 +135,34 @@ export class GameManager extends Component {
         const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
         
         for (const targetItem of allItems) {
+            // Don't match with self or items already marked as matched
             if (targetItem.node === draggedNode || targetItem.isMatched) continue;
 
-            if (Vec3.distance(worldPos, targetItem.node.worldPosition) < 60) {
+            // Check distance (Snap Threshold)
+            if (Vec3.distance(worldPos, targetItem.node.worldPosition) < 75) {
+                // Check color compatibility
                 if (dragScript.colorName === targetItem.colorName) {
-                    this.playSFX("Merge"); // Play merge sound
-                    this.reportMergeEvent(dragScript.colorName);
-                    dragScript.playMatchAnimation(); 
-                    targetItem.playMatchAnimation(); 
+                    
+                    // Mark both as matched immediately to prevent double-matching during tween
+                    dragScript.isMatched = true;
+                    targetItem.isMatched = true;
+
+                    // SNAP EFFECT: Move the dragged node exactly onto the target node
+                    const targetWorldPos = targetItem.node.worldPosition.clone();
+                    
+                    tween(draggedNode)
+                        .to(0.05, { worldPosition: targetWorldPos }, { easing: 'sineOut' })
+                        .call(() => {
+                            // After snapping, trigger the destruction sequence
+                            this.playSFX("Merge"); 
+                            this.reportMergeEvent(dragScript.colorName);
+                            
+                            // Both items play their pop and destroy animations
+                            dragScript.playMatchAnimation(); 
+                            targetItem.playMatchAnimation(); 
+                        })
+                        .start();
+
                     return true;
                 }
             }
