@@ -2,7 +2,8 @@ import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UI
 import { MergeItem } from './MergeItem';
 import { UIElemAnim } from './UIElemAnim'; 
 import { VictoryScreen } from './VictoryScreen'; 
-import { AudioContent } from './AudioContent'; // Import the AudioContent class
+import { AudioContent } from './AudioContent'; 
+import { GridGenerator } from './GridGenerator';
 
 const { ccclass, property } = _decorator;
 
@@ -12,7 +13,7 @@ export class GameManager extends Component {
 
     @property(Node) public gridContainer: Node = null!;
     
-    // Updated: Global Audio List
+    // Global Audio List for centralized sound management
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
     
@@ -42,7 +43,18 @@ export class GameManager extends Component {
     }
 
     /**
-     * Helper to play sound by name from the list
+     * Public getters for GridGenerator difficulty logic
+     */
+    public getCurrentStep(): number {
+        return this.currentStep;
+    }
+
+    public getMatchCounter(): number {
+        return this.matchCounter;
+    }
+
+    /**
+     * Helper to play sound by name from the audioList
      */
     public playSFX(name: string) {
         const target = this.audioList.find(a => a.AudioName === name);
@@ -63,6 +75,7 @@ export class GameManager extends Component {
         let frameIndex = 0;
         let isFinalStep = false;
 
+        // Step logic: Purple -> Yellow -> Orange
         if (this.currentStep === 1 && color === 'purple') {
             this.fountainCount++;
             this.matchCounter++;
@@ -92,7 +105,7 @@ export class GameManager extends Component {
     private executeStepTransition(frameIndex: number, isFinalStep: boolean) {
         if (!this.uiAnim) return;
 
-        this.playSFX("SceneTransition"); // Play transition sound
+        this.playSFX("SceneTransition");
 
         this.uiAnim.moveUIOut(() => {
             this.revealNewScene(frameIndex, () => {
@@ -101,9 +114,31 @@ export class GameManager extends Component {
                         if (this.victoryScreen) this.victoryScreen.show(true);
                     } else {
                         this.uiAnim.returnToOriginal();
+                        // Clear items that are no longer needed for the new step
+                        this.clearOldStepItems();
                     }
                 }, 0.5);
             });
+        });
+    }
+
+    /**
+     * Removes target items from the previous step to refresh the board 
+     */
+    private clearOldStepItems() {
+        const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
+        const generator = this.gridContainer.getComponent(GridGenerator);
+        
+        allItems.forEach(item => {
+            const color = item.colorName.toLowerCase();
+            // Example: If moving to Step 2, clear leftover Purples
+            if ((this.currentStep === 2 && color === 'purple') || 
+                (this.currentStep === 3 && color === 'yellow')) {
+                
+                const pos = item.node.position.clone();
+                item.node.destroy();
+                if (generator) generator.refillSlot(pos);
+            }
         });
     }
 
@@ -127,6 +162,9 @@ export class GameManager extends Component {
         this.matchCounter = 0; 
     }
 
+    /**
+     * Handles the "Snap-and-Match" logic when an item is dragged over another
+     */
     public checkMatchAtPosition(draggedNode: Node): boolean {
         const dragScript = draggedNode.getComponent(MergeItem);
         if (!dragScript || dragScript.isMatched) return false;
@@ -135,29 +173,26 @@ export class GameManager extends Component {
         const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
         
         for (const targetItem of allItems) {
-            // Don't match with self or items already marked as matched
             if (targetItem.node === draggedNode || targetItem.isMatched) continue;
 
-            // Check distance (Snap Threshold)
+            // Distance threshold for "Snapping"
             if (Vec3.distance(worldPos, targetItem.node.worldPosition) < 75) {
-                // Check color compatibility
                 if (dragScript.colorName === targetItem.colorName) {
                     
-                    // Mark both as matched immediately to prevent double-matching during tween
+                    // Mark as matched immediately to prevent multiple triggers
                     dragScript.isMatched = true;
                     targetItem.isMatched = true;
 
-                    // SNAP EFFECT: Move the dragged node exactly onto the target node
                     const targetWorldPos = targetItem.node.worldPosition.clone();
                     
+                    // Fast tween to "Snap" the items together before destroying
                     tween(draggedNode)
                         .to(0.05, { worldPosition: targetWorldPos }, { easing: 'sineOut' })
                         .call(() => {
-                            // After snapping, trigger the destruction sequence
                             this.playSFX("Merge"); 
                             this.reportMergeEvent(dragScript.colorName);
                             
-                            // Both items play their pop and destroy animations
+                            // Trigger the actual destruction and particle effects in MergeItem
                             dragScript.playMatchAnimation(); 
                             targetItem.playMatchAnimation(); 
                         })

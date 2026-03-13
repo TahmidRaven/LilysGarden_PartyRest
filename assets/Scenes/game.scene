@@ -2798,6 +2798,10 @@
       {
         "__uuid__": "93ad54f4-9809-4d4f-aeb9-4c07fe1b61e2",
         "__expectedType__": "cc.Prefab"
+      },
+      {
+        "__uuid__": "20a52cdb-2a37-421b-83c1-d747aa6bd465",
+        "__expectedType__": "cc.Prefab"
       }
     ],
     "rows": 4,
