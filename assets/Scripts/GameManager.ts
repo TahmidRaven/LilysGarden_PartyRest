@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween } from 'cc';
 import { MergeItem } from './MergeItem';
 import { UIElemAnim } from './UIElemAnim'; 
+import { VictoryScreen } from './VictoryScreen'; 
 
 const { ccclass, property } = _decorator;
 
@@ -15,6 +16,7 @@ export class GameManager extends Component {
     @property([SpriteFrame]) public sceneFrames: Array<SpriteFrame> = []; 
 
     @property(UIElemAnim) public uiAnim: UIElemAnim = null!;
+    @property(VictoryScreen) public victoryScreen: VictoryScreen = null!; 
 
     private currentStep: number = 1;
     private matchCounter: number = 0;
@@ -26,33 +28,43 @@ export class GameManager extends Component {
     private reportMergeEvent(colorName: string) {
         const color = colorName.toLowerCase();
 
+        // Step 1: Purple Merge
         if (this.currentStep === 1 && color === 'purple') {
             this.matchCounter++;
-            console.log(`${color} merge ${this.matchCounter}/3`);
-            
             if (this.matchCounter >= 3) {
                 this.revealNewScene(1); 
                 if (this.uiAnim) this.uiAnim.playTransition(); 
                 this.moveToNextStep();
             }
         } 
+        // Step 2: Yellow Merge
         else if (this.currentStep === 2 && color === 'yellow') {
             this.matchCounter++;
-            console.log(`${color} merge ${this.matchCounter}/3`);
-            
             if (this.matchCounter >= 3) {
                 this.revealNewScene(2); 
                 if (this.uiAnim) this.uiAnim.playTransition(); 
                 this.moveToNextStep();
             }
         } 
+        // Step 3: Final Orange Merge
         else if (this.currentStep === 3 && color === 'orange') {
             this.matchCounter++;
-            console.log(`${color} merge ${this.matchCounter}/3`);
             
             if (this.matchCounter >= 3) {
                 this.revealNewScene(3); 
-                if (this.uiAnim) this.uiAnim.playTransition();
+                
+                // Hide UI elements during final reveal
+                if (this.uiAnim) {
+                    this.uiAnim.playTransition(true); 
+                }
+                
+                // Show Victory Screen after background animation settles
+                this.scheduleOnce(() => {
+                    if (this.victoryScreen) {
+                        this.victoryScreen.show(true);
+                    }
+                }, 2.0);
+
                 this.moveToNextStep();
             }
         }
@@ -66,9 +78,6 @@ export class GameManager extends Component {
             uiOpacity = this.backgroundSprite.addComponent(UIOpacity);
         }
 
-        // 1. Zoom in and soften the old scene (Fade out slightly)
-        // 2. Swap the sprite frame
-        // 3. Zoom back to normal and snap to full opacity (Reveal)
         tween(this.backgroundSprite.node)
             .to(0.6, { scale: new Vec3(1.1, 1.1, 1) }, { easing: 'sineOut' })
             .start();
@@ -77,14 +86,10 @@ export class GameManager extends Component {
             .to(0.6, { opacity: 100 }, { 
                 easing: 'sineOut',
                 onComplete: () => {
-                    // Swap images while still semi-visible and zoomed
                     this.backgroundSprite.spriteFrame = this.sceneFrames[frameIndex];
-                    
-                    // Reveal the new scene by snapping scale and opacity back
                     tween(this.backgroundSprite.node)
                         .to(0.8, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
                         .start();
-                    
                     tween(uiOpacity!)
                         .to(0.8, { opacity: 255 }, { easing: 'sineIn' })
                         .start();
