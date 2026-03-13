@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween, Label } from 'cc';
+import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween, Label, Animation } from 'cc';
 import { MergeItem } from './MergeItem';
 import { UIElemAnim } from './UIElemAnim'; 
 import { VictoryScreen } from './VictoryScreen'; 
@@ -26,6 +26,8 @@ export class GameManager extends Component {
     @property(Label) public fountainLabel: Label = null!;
     @property(Label) public gardenLabel: Label = null!;
     @property(Label) public lanternLabel: Label = null!;
+
+    @property(Animation) public lilyAnimation: Animation = null!; // Reference for the Lily node animation
 
     private currentStep: number = 1;
     private matchCounter: number = 0;
@@ -134,7 +136,15 @@ export class GameManager extends Component {
             this.revealNewScene(frameIndex, () => {
                 this.scheduleOnce(() => {
                     if (isFinalStep) {
-                        if (this.victoryScreen) this.victoryScreen.show(true);
+                        // Switch to happy animation and wait 2 seconds before victory screen
+                        if (this.lilyAnimation) {
+                            this.lilyAnimation.play('Lily_happy');
+                        }
+                        
+                        this.scheduleOnce(() => {
+                            if (this.victoryScreen) this.victoryScreen.show(true);
+                        }, 2.0);
+
                     } else {
                         this.uiAnim.returnToOriginal();
                         this.clearOldStepItems();
