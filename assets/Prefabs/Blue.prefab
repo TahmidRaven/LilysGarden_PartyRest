@@ -243,6 +243,10 @@
       "__id__": 11
     },
     "colorName": "Blue",
+    "destroyAnimPrefab": {
+      "__uuid__": "ad2e96ec-8cb7-4908-9748-ceeb2fcf54e9",
+      "__expectedType__": "cc.Prefab"
+    },
     "_id": ""
   },
   {

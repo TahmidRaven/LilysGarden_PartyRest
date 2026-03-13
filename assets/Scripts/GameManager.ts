@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween } from 'cc';
+import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween, Label } from 'cc';
 import { MergeItem } from './MergeItem';
 import { UIElemAnim } from './UIElemAnim'; 
 import { VictoryScreen } from './VictoryScreen'; 
@@ -18,11 +18,31 @@ export class GameManager extends Component {
     @property(UIElemAnim) public uiAnim: UIElemAnim = null!;
     @property(VictoryScreen) public victoryScreen: VictoryScreen = null!; 
 
+    // New Label Properties for Counters
+    @property(Label) public fountainLabel: Label = null!;
+    @property(Label) public gardenLabel: Label = null!;
+    @property(Label) public lanternLabel: Label = null!;
+
     private currentStep: number = 1;
     private matchCounter: number = 0;
 
+    // Individual progress trackers
+    private fountainCount: number = 0;
+    private gardenCount: number = 0;
+    private lanternCount: number = 0;
+
     onLoad() {
         GameManager.instance = this;
+        this.updateLabels(); // Initialize labels with 0/3
+    }
+
+    /**
+     * Updates the text strings on the UI labels with newlines
+     */
+    private updateLabels() {
+        if (this.fountainLabel) this.fountainLabel.string = `Fix Fountain\n${this.fountainCount} / 3`;
+        if (this.gardenLabel) this.gardenLabel.string = `Fix Garden\n${this.gardenCount} / 3`;
+        if (this.lanternLabel) this.lanternLabel.string = `Lantern\n${this.lanternCount} / 3`;
     }
 
     private reportMergeEvent(colorName: string) {
@@ -31,7 +51,9 @@ export class GameManager extends Component {
         let frameIndex = 0;
         let isFinalStep = false;
 
+        // Logic updated to track individual counts and update UI
         if (this.currentStep === 1 && color === 'purple') {
+            this.fountainCount++;
             this.matchCounter++;
             if (this.matchCounter >= 3) {
                 shouldTriggerStep = true;
@@ -39,6 +61,7 @@ export class GameManager extends Component {
             }
         } 
         else if (this.currentStep === 2 && color === 'yellow') {
+            this.gardenCount++;
             this.matchCounter++;
             if (this.matchCounter >= 3) {
                 shouldTriggerStep = true;
@@ -46,6 +69,7 @@ export class GameManager extends Component {
             }
         } 
         else if (this.currentStep === 3 && color === 'orange') {
+            this.lanternCount++;
             this.matchCounter++;
             if (this.matchCounter >= 3) {
                 shouldTriggerStep = true;
@@ -54,20 +78,21 @@ export class GameManager extends Component {
             }
         }
 
+        this.updateLabels(); // Refresh the labels after every match
+
         if (shouldTriggerStep) {
-            this.executeStepTransition(frameIndex, isFinalStep);
-            this.moveToNextStep();
+            this.scheduleOnce(() => {
+                this.executeStepTransition(frameIndex, isFinalStep);
+                this.moveToNextStep();
+            }, 0.35); 
         }
     }
-
 
     private executeStepTransition(frameIndex: number, isFinalStep: boolean) {
         if (!this.uiAnim) return;
 
         this.uiAnim.moveUIOut(() => {
-            
             this.revealNewScene(frameIndex, () => {
-                
                 this.scheduleOnce(() => {
                     if (isFinalStep) {
                         if (this.victoryScreen) this.victoryScreen.show(true);
