@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, AudioSource, UITransform } from 'cc';
+import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween } from 'cc';
 import { MergeItem } from './MergeItem';
 
 const { ccclass, property } = _decorator;
@@ -7,11 +7,83 @@ const { ccclass, property } = _decorator;
 export class GameManager extends Component {
     public static instance: GameManager = null!;
 
-    @property(Node) public gridContainer: Node = null!; 
+    @property(Node) public gridContainer: Node = null!;
     @property(AudioSource) public audioSource: AudioSource = null!;
+    
+    @property(Sprite) public backgroundSprite: Sprite = null!; 
+    @property([SpriteFrame]) public sceneFrames: Array<SpriteFrame> = []; 
+
+    private currentStep: number = 1;
+    private matchCounter: number = 0;
 
     onLoad() {
         GameManager.instance = this;
+    }
+
+    private reportMergeEvent(colorName: string) {
+        const color = colorName.toLowerCase();
+
+        if (this.currentStep === 1 && color === 'purple') {
+            this.matchCounter++;
+            if (this.matchCounter >= 3) {
+                this.revealNewScene(1); 
+                this.moveToNextStep();
+            }
+        } 
+        else if (this.currentStep === 2 && color === 'yellow') {
+            this.matchCounter++;
+            if (this.matchCounter >= 3) {
+                this.revealNewScene(2); 
+                this.moveToNextStep();
+            }
+        } 
+        else if (this.currentStep === 3 && color === 'orange') {
+            this.matchCounter++;
+            if (this.matchCounter >= 3) {
+                this.revealNewScene(3); 
+                this.moveToNextStep();
+            }
+        }
+    }
+
+    private revealNewScene(frameIndex: number) {
+        if (!this.backgroundSprite || !this.sceneFrames[frameIndex]) return;
+
+        let uiOpacity = this.backgroundSprite.getComponent(UIOpacity);
+        if (!uiOpacity) {
+            uiOpacity = this.backgroundSprite.addComponent(UIOpacity);
+        }
+
+        // 1. Zoom in and soften the old scene (Fade out slightly)
+        // 2. Swap the sprite frame
+        // 3. Zoom back to normal and snap to full opacity (Reveal)
+        tween(this.backgroundSprite.node)
+            .to(0.6, { scale: new Vec3(1.1, 1.1, 1) }, { easing: 'sineOut' })
+            .start();
+
+        tween(uiOpacity)
+            .to(0.6, { opacity: 100 }, { 
+                easing: 'sineOut',
+                onComplete: () => {
+                    // Swap images while still semi-visible and zoomed
+                    this.backgroundSprite.spriteFrame = this.sceneFrames[frameIndex];
+                    
+                    // Reveal the new scene by snapping scale and opacity back
+                    tween(this.backgroundSprite.node)
+                        .to(0.8, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+                        .start();
+                    
+                    tween(uiOpacity!)
+                        .to(0.8, { opacity: 255 }, { easing: 'sineIn' })
+                        .start();
+                }
+            })
+            .start();
+    }
+
+    private moveToNextStep() {
+        this.currentStep++;
+        this.matchCounter = 0; 
     }
 
     public checkMatchAtPosition(draggedNode: Node): boolean {
@@ -22,15 +94,13 @@ export class GameManager extends Component {
         const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
         
         for (const targetItem of allItems) {
-            // Skip itself AND skip any items already playing their death animation
             if (targetItem.node === draggedNode || targetItem.isMatched) continue;
 
-            const distance = Vec3.distance(worldPos, targetItem.node.worldPosition);
-            
-            if (distance < 60) {
+            if (Vec3.distance(worldPos, targetItem.node.worldPosition) < 60) {
                 if (dragScript.colorName === targetItem.colorName) {
-                    dragScript.playMatchAnimation();
-                    targetItem.playMatchAnimation();
+                    this.reportMergeEvent(dragScript.colorName);
+                    dragScript.playMatchAnimation(); 
+                    targetItem.playMatchAnimation(); 
                     if (this.audioSource) this.audioSource.play();
                     return true;
                 }

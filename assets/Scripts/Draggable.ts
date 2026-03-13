@@ -14,7 +14,6 @@ export class Draggable extends Component {
 
     onLoad() {
         this.topLayerNode = find('Canvas/MergeItemGoOnTop')!;
-        
         this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
         this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
@@ -24,9 +23,14 @@ export class Draggable extends Component {
     public setHomePosition(pos: Vec3) {
         this.homePosition = pos.clone();
     }
+
+    public getHomePosition(): Vec3 {
+        return this.homePosition;
+    }
+
     onTouchStart(event: EventTouch) {
-        const mergeScript = this.getComponent(MergeItem);
-        if (mergeScript && mergeScript.isMatched) return; 
+        const mergeItem = this.getComponent(MergeItem);
+        if (mergeItem && mergeItem.isMatched) return; // Non-blocking safety check
 
         const loc = event.getUILocation();
         this.startTouchPos.set(loc.x, loc.y, 0);
@@ -81,14 +85,10 @@ export class Draggable extends Component {
         const gridTransform = grid?.getComponent(UITransform);
 
         if (grid && gridTransform) {
-            // Convert local home math to world pixels for a direct flight path
             const worldTargetPos = gridTransform.convertToWorldSpaceAR(this.homePosition);
 
             tween(this.node)
-                .to(0.15, { 
-                    worldPosition: worldTargetPos, 
-                    scale: Vec3.ONE 
-                }, { easing: 'sineOut' })
+                .to(0.15, { worldPosition: worldTargetPos, scale: Vec3.ONE }, { easing: 'sineOut' })
                 .call(() => {
                     this.node.setParent(grid);
                     this.node.setPosition(this.homePosition);
