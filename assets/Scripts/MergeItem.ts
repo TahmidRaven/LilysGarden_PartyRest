@@ -21,6 +21,9 @@ export class MergeItem extends Component {
         if (lowerName === 'yellow') return new Color(255, 235, 0);
         if (lowerName === 'orange') return new Color(255, 165, 0);
         if (lowerName === 'red') return new Color(255, 50, 50);
+        if (lowerName === 'blue') return new Color(116, 116, 206, 255);
+        if (lowerName === 'pink') return new Color(255, 192, 203);
+
         return Color.WHITE;
     }
 

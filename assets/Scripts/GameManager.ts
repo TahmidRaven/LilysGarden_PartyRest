@@ -12,8 +12,8 @@ export class GameManager extends Component {
     public static instance: GameManager = null!;
 
     @property(Node) public gridContainer: Node = null!;
+    @property(Node) public introScene: Node = null!; // Reference to the Intro Scene node
     
-    // Global Audio List for centralized sound management
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
     
@@ -32,19 +32,46 @@ export class GameManager extends Component {
     private fountainCount: number = 0;
     private gardenCount: number = 0;
     private lanternCount: number = 0;
+    private hasGameStarted: boolean = false; // Flag to track the first tap
 
     onLoad() {
         GameManager.instance = this;
         this.updateLabels(); 
+
+        // Hide UI elements initially
+        if (this.uiAnim) {
+            this.uiAnim.setUIVisible(false);
+        }
+
+        // Listen for the first touch to start the game
+        this.node.on(Node.EventType.TOUCH_START, this.handleFirstTap, this);
+    }
+
+    private handleFirstTap() {
+        if (this.hasGameStarted) return;
+        this.hasGameStarted = true;
+
+        // Destroy the intro scene and show the UI
+        if (this.introScene) {
+            this.introScene.destroy();
+        }
+
+        if (this.uiAnim) {
+            this.uiAnim.setUIVisible(true);
+            this.uiAnim.returnToOriginal(); // Optional: use existing animation to bring UI in
+        }
+
+        // Unsubscribe from the start event
+        this.node.off(Node.EventType.TOUCH_START, this.handleFirstTap, this);
+
+        // Start BGM on the first user interaction
+        this.playSFX("BGM");
     }
 
     start() {
-        this.playSFX("BGM"); // Start background music on launch
+        // BGM is now handled in handleFirstTap for better browser compatibility
     }
 
-    /**
-     * Public getters for GridGenerator difficulty logic
-     */
     public getCurrentStep(): number {
         return this.currentStep;
     }
@@ -53,9 +80,6 @@ export class GameManager extends Component {
         return this.matchCounter;
     }
 
-    /**
-     * Helper to play sound by name from the audioList
-     */
     public playSFX(name: string) {
         const target = this.audioList.find(a => a.AudioName === name);
         if (target) {
@@ -75,7 +99,6 @@ export class GameManager extends Component {
         let frameIndex = 0;
         let isFinalStep = false;
 
-        // Step logic: Purple -> Yellow -> Orange
         if (this.currentStep === 1 && color === 'purple') {
             this.fountainCount++;
             this.matchCounter++;
@@ -114,7 +137,6 @@ export class GameManager extends Component {
                         if (this.victoryScreen) this.victoryScreen.show(true);
                     } else {
                         this.uiAnim.returnToOriginal();
-                        // Clear items that are no longer needed for the new step
                         this.clearOldStepItems();
                     }
                 }, 0.5);
@@ -122,16 +144,12 @@ export class GameManager extends Component {
         });
     }
 
-    /**
-     * Removes target items from the previous step to refresh the board 
-     */
     private clearOldStepItems() {
         const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
         const generator = this.gridContainer.getComponent(GridGenerator);
         
         allItems.forEach(item => {
             const color = item.colorName.toLowerCase();
-            // Example: If moving to Step 2, clear leftover Purples
             if ((this.currentStep === 2 && color === 'purple') || 
                 (this.currentStep === 3 && color === 'yellow')) {
                 
@@ -162,9 +180,6 @@ export class GameManager extends Component {
         this.matchCounter = 0; 
     }
 
-    /**
-     * Handles the "Snap-and-Match" logic when an item is dragged over another
-     */
     public checkMatchAtPosition(draggedNode: Node): boolean {
         const dragScript = draggedNode.getComponent(MergeItem);
         if (!dragScript || dragScript.isMatched) return false;
@@ -175,24 +190,20 @@ export class GameManager extends Component {
         for (const targetItem of allItems) {
             if (targetItem.node === draggedNode || targetItem.isMatched) continue;
 
-            // Distance threshold for "Snapping"
             if (Vec3.distance(worldPos, targetItem.node.worldPosition) < 75) {
                 if (dragScript.colorName === targetItem.colorName) {
                     
-                    // Mark as matched immediately to prevent multiple triggers
                     dragScript.isMatched = true;
                     targetItem.isMatched = true;
 
                     const targetWorldPos = targetItem.node.worldPosition.clone();
                     
-                    // Fast tween to "Snap" the items together before destroying
                     tween(draggedNode)
                         .to(0.05, { worldPosition: targetWorldPos }, { easing: 'sineOut' })
                         .call(() => {
                             this.playSFX("Merge"); 
                             this.reportMergeEvent(dragScript.colorName);
                             
-                            // Trigger the actual destruction and particle effects in MergeItem
                             dragScript.playMatchAnimation(); 
                             targetItem.playMatchAnimation(); 
                         })

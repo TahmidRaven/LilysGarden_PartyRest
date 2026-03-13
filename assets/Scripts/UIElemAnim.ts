@@ -23,13 +23,18 @@ export class UIElemAnim extends Component {
     }
 
     /**
-     * Moves UI elements away to reveal the scene.
-     * @param onComplete Callback fired when the movement is finished.
+     * Toggles the active state of gameplay UI nodes
      */
+    public setUIVisible(visible: boolean) {
+        if (this.logoNode) this.logoNode.active = visible;
+        if (this.scoreboardNode) this.scoreboardNode.active = visible;
+        if (this.gridControllerNode) this.gridControllerNode.active = visible;
+        if (this.playButtonNode) this.playButtonNode.active = visible;
+    }
+
     public moveUIOut(onComplete?: Function) {
         this.playButtonNode.active = false;
 
-        // Use one tween as the master timer for the callback
         tween(this.logoNode)
             .to(1.0, { worldPosition: this.logoAnimPos.worldPosition }, { easing: 'sineOut' })
             .call(() => { if (onComplete) onComplete(); })
@@ -44,9 +49,6 @@ export class UIElemAnim extends Component {
             .start();
     }
 
-    /**
-     * Returns UI elements to their original gameplay positions.
-     */
     public returnToOriginal() {
         tween(this.logoNode).to(1.0, { position: this.originalLogoPos }, { easing: 'backOut' }).start();
         tween(this.scoreboardNode).to(1.0, { position: this.originalScoreboardPos }, { easing: 'backOut' }).start();
