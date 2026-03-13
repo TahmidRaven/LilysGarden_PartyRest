@@ -2596,6 +2596,15 @@
     "lilyAnimation": {
       "__id__": 15
     },
+    "completedStep01": {
+      "__id__": 34
+    },
+    "completedStep02": {
+      "__id__": 45
+    },
+    "completedStep03": {
+      "__id__": 56
+    },
     "_id": "e9dCIQorhI1r5xv1lFORvn"
   },
   {

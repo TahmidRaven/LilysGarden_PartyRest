@@ -29,6 +29,11 @@ export class GameManager extends Component {
 
     @property(Animation) public lilyAnimation: Animation = null!; // Reference for the Lily node animation
 
+
+    @property(Node) public completedStep01: Node = null!;
+    @property(Node) public completedStep02: Node = null!;
+    @property(Node) public completedStep03: Node = null!;
+
     private currentStep: number = 1;
     private matchCounter: number = 0;
     private fountainCount: number = 0;
@@ -90,11 +95,30 @@ export class GameManager extends Component {
     }
 
     private updateLabels() {
-        if (this.fountainLabel) this.fountainLabel.string = `Fix Fountain\n${this.fountainCount} / 3`;
-        if (this.gardenLabel) this.gardenLabel.string = `Fix Garden\n${this.gardenCount} / 3`;
-        if (this.lanternLabel) this.lanternLabel.string = `Lantern\n${this.lanternCount} / 3`;
-    }
+        // Step 1: Fountain
+        if (this.fountainLabel) {
+            const isDone = this.fountainCount >= 3;
+            this.fountainLabel.node.active = !isDone;
+            if (this.completedStep01) this.completedStep01.active = isDone;
+            this.fountainLabel.string = `Fix Fountain\n${this.fountainCount} / 3`;
+        }
 
+        // Step 2: Garden
+        if (this.gardenLabel) {
+            const isDone = this.gardenCount >= 3;
+            this.gardenLabel.node.active = !isDone;
+            if (this.completedStep02) this.completedStep02.active = isDone;
+            this.gardenLabel.string = `Fix Garden\n${this.gardenCount} / 3`;
+        }
+
+        // Step 3: Lantern
+        if (this.lanternLabel) {
+            const isDone = this.lanternCount >= 3;
+            this.lanternLabel.node.active = !isDone;
+            if (this.completedStep03) this.completedStep03.active = isDone;
+            this.lanternLabel.string = `Lantern\n${this.lanternCount} / 3`;
+        }
+    }
     private reportMergeEvent(colorName: string) {
         const color = colorName.toLowerCase();
         let shouldTriggerStep = false;
