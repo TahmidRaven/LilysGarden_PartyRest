@@ -143,7 +143,7 @@ export class GameManager extends Component {
                         
                         this.scheduleOnce(() => {
                             if (this.victoryScreen) this.victoryScreen.show(true);
-                        }, 2.0);
+                        }, 3.0);
 
                     } else {
                         this.uiAnim.returnToOriginal();
