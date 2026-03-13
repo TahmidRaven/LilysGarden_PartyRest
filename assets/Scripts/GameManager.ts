@@ -27,57 +27,67 @@ export class GameManager extends Component {
 
     private reportMergeEvent(colorName: string) {
         const color = colorName.toLowerCase();
+        let shouldTriggerStep = false;
+        let frameIndex = 0;
+        let isFinalStep = false;
 
-        // Step 1: Purple Merge
         if (this.currentStep === 1 && color === 'purple') {
             this.matchCounter++;
             if (this.matchCounter >= 3) {
-                this.revealNewScene(1); 
-                if (this.uiAnim) this.uiAnim.playTransition(); 
-                this.moveToNextStep();
+                shouldTriggerStep = true;
+                frameIndex = 1;
             }
         } 
-        // Step 2: Yellow Merge
         else if (this.currentStep === 2 && color === 'yellow') {
             this.matchCounter++;
             if (this.matchCounter >= 3) {
-                this.revealNewScene(2); 
-                if (this.uiAnim) this.uiAnim.playTransition(); 
-                this.moveToNextStep();
+                shouldTriggerStep = true;
+                frameIndex = 2;
             }
         } 
-        // Step 3: Final Orange Merge
         else if (this.currentStep === 3 && color === 'orange') {
             this.matchCounter++;
-            
             if (this.matchCounter >= 3) {
-                this.revealNewScene(3); 
-                
-                // Hide UI elements during final reveal
-                if (this.uiAnim) {
-                    this.uiAnim.playTransition(true); 
-                }
-                
-                // Show Victory Screen after background animation settles
-                this.scheduleOnce(() => {
-                    if (this.victoryScreen) {
-                        this.victoryScreen.show(true);
-                    }
-                }, 2.0);
-
-                this.moveToNextStep();
+                shouldTriggerStep = true;
+                frameIndex = 3;
+                isFinalStep = true;
             }
+        }
+
+        if (shouldTriggerStep) {
+            this.executeStepTransition(frameIndex, isFinalStep);
+            this.moveToNextStep();
         }
     }
 
-    private revealNewScene(frameIndex: number) {
+    private executeStepTransition(frameIndex: number, isFinalStep: boolean) {
+        if (!this.uiAnim) return;
+
+        // Stage 1: Move UI Out
+        this.uiAnim.moveUIOut(() => {
+            
+            // Stage 2: Reveal the New Scene
+            this.revealNewScene(frameIndex, () => {
+                
+                // Stage 3: Hold for 0.5 seconds as requested
+                this.scheduleOnce(() => {
+                    if (isFinalStep) {
+                        if (this.victoryScreen) this.victoryScreen.show(true);
+                    } else {
+                        // Stage 4: Return UI to original positions
+                        this.uiAnim.returnToOriginal();
+                    }
+                }, 0.5);
+            });
+        });
+    }
+
+    private revealNewScene(frameIndex: number, onComplete?: Function) {
         if (!this.backgroundSprite || !this.sceneFrames[frameIndex]) return;
 
-        let uiOpacity = this.backgroundSprite.getComponent(UIOpacity);
-        if (!uiOpacity) {
-            uiOpacity = this.backgroundSprite.addComponent(UIOpacity);
-        }
+        let uiOpacity = this.backgroundSprite.getComponent(UIOpacity) || this.backgroundSprite.addComponent(UIOpacity);
 
+        // Initial Zoom/Fade out
         tween(this.backgroundSprite.node)
             .to(0.6, { scale: new Vec3(1.1, 1.1, 1) }, { easing: 'sineOut' })
             .start();
@@ -87,11 +97,15 @@ export class GameManager extends Component {
                 easing: 'sineOut',
                 onComplete: () => {
                     this.backgroundSprite.spriteFrame = this.sceneFrames[frameIndex];
+                    
+                    // Zoom back in and Fade in
                     tween(this.backgroundSprite.node)
                         .to(0.8, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
                         .start();
+
                     tween(uiOpacity!)
                         .to(0.8, { opacity: 255 }, { easing: 'sineIn' })
+                        .call(() => { if (onComplete) onComplete(); })
                         .start();
                 }
             })

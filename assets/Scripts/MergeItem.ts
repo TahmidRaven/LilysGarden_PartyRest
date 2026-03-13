@@ -22,7 +22,6 @@ export class MergeItem extends Component {
             .to(0.1, { scale: new Vec3(1.2, 1.2, 1) }, { easing: 'sineOut' })
             .to(0.15, { scale: Vec3.ZERO }, { easing: 'sineIn' })
             .call(() => {
-                // Refill slot using the global reference
                 if (GameManager.instance && GameManager.instance.gridContainer) {
                     const generator = GameManager.instance.gridContainer.getComponent(GridGenerator);
                     if (generator) {

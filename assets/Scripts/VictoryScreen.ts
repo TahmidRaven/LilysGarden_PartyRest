@@ -27,7 +27,6 @@ export class VictoryScreen extends Component {
         this.initializeComponents();
         this.node.active = true;
 
-        // Ensure the Victory Screen is at the top of the layer stack
         if (this.node.parent) {
             this.node.setSiblingIndex(this.node.parent.children.length - 1);
         }
@@ -51,7 +50,6 @@ export class VictoryScreen extends Component {
     }
 
     private triggerEndGameAds() {
-        // Trigger ad network logic here
         console.log("Victory Animation Complete");
     }
 }

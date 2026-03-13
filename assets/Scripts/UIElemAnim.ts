@@ -22,11 +22,17 @@ export class UIElemAnim extends Component {
         this.originalGridPos = this.gridControllerNode.position.clone();
     }
 
-    public playTransition(skipReturn: boolean = false) {
+    /**
+     * Moves UI elements away to reveal the scene.
+     * @param onComplete Callback fired when the movement is finished.
+     */
+    public moveUIOut(onComplete?: Function) {
         this.playButtonNode.active = false;
 
+        // Use one tween as the master timer for the callback
         tween(this.logoNode)
             .to(1.0, { worldPosition: this.logoAnimPos.worldPosition }, { easing: 'sineOut' })
+            .call(() => { if (onComplete) onComplete(); })
             .start();
 
         tween(this.scoreboardNode)
@@ -36,18 +42,18 @@ export class UIElemAnim extends Component {
         tween(this.gridControllerNode)
             .to(1.0, { worldPosition: this.gridControllerAnimPos.worldPosition }, { easing: 'sineOut' })
             .start();
-
-        if (!skipReturn) {
-            this.scheduleOnce(() => {
-                this.returnToOriginal();
-            }, 1.9);
-        }
     }
 
-    private returnToOriginal() {
+    /**
+     * Returns UI elements to their original gameplay positions.
+     */
+    public returnToOriginal() {
         tween(this.logoNode).to(1.0, { position: this.originalLogoPos }, { easing: 'backOut' }).start();
         tween(this.scoreboardNode).to(1.0, { position: this.originalScoreboardPos }, { easing: 'backOut' }).start();
         tween(this.gridControllerNode).to(1.0, { position: this.originalGridPos }, { easing: 'backOut' }).start();
-        this.playButtonNode.active = true;
+        
+        this.scheduleOnce(() => {
+            this.playButtonNode.active = true;
+        }, 0.5);
     }
 }
