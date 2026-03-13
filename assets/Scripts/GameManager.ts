@@ -60,21 +60,18 @@ export class GameManager extends Component {
         }
     }
 
+
     private executeStepTransition(frameIndex: number, isFinalStep: boolean) {
         if (!this.uiAnim) return;
 
-        // Stage 1: Move UI Out
         this.uiAnim.moveUIOut(() => {
             
-            // Stage 2: Reveal the New Scene
             this.revealNewScene(frameIndex, () => {
                 
-                // Stage 3: Hold for 0.5 seconds as requested
                 this.scheduleOnce(() => {
                     if (isFinalStep) {
                         if (this.victoryScreen) this.victoryScreen.show(true);
                     } else {
-                        // Stage 4: Return UI to original positions
                         this.uiAnim.returnToOriginal();
                     }
                 }, 0.5);
@@ -84,30 +81,15 @@ export class GameManager extends Component {
 
     private revealNewScene(frameIndex: number, onComplete?: Function) {
         if (!this.backgroundSprite || !this.sceneFrames[frameIndex]) return;
-
-        let uiOpacity = this.backgroundSprite.getComponent(UIOpacity) || this.backgroundSprite.addComponent(UIOpacity);
-
-        // Initial Zoom/Fade out
+        
         tween(this.backgroundSprite.node)
-            .to(0.6, { scale: new Vec3(1.1, 1.1, 1) }, { easing: 'sineOut' })
-            .start();
-
-        tween(uiOpacity)
-            .to(0.6, { opacity: 100 }, { 
-                easing: 'sineOut',
-                onComplete: () => {
-                    this.backgroundSprite.spriteFrame = this.sceneFrames[frameIndex];
-                    
-                    // Zoom back in and Fade in
-                    tween(this.backgroundSprite.node)
-                        .to(0.8, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
-                        .start();
-
-                    tween(uiOpacity!)
-                        .to(0.8, { opacity: 255 }, { easing: 'sineIn' })
-                        .call(() => { if (onComplete) onComplete(); })
-                        .start();
-                }
+            .to(0.3, { scale: new Vec3(1.1, 1.1, 1) }, { easing: 'sineOut' })
+            .call(() => {
+                this.backgroundSprite.spriteFrame = this.sceneFrames[frameIndex];
+            })
+            .to(0.7, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+            .call(() => {
+                if (onComplete) onComplete();
             })
             .start();
     }
