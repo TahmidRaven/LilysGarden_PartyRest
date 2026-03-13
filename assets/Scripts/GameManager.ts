@@ -14,16 +14,16 @@ export class GameManager extends Component {
         GameManager.instance = this;
     }
 
-
     public checkMatchAtPosition(draggedNode: Node): boolean {
         const dragScript = draggedNode.getComponent(MergeItem);
-        if (!dragScript) return false;
+        if (!dragScript || dragScript.isMatched) return false;
 
         const worldPos = draggedNode.worldPosition;
         const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
         
         for (const targetItem of allItems) {
-            if (targetItem.node === draggedNode) continue;
+            // Skip itself AND skip any items already playing their death animation
+            if (targetItem.node === draggedNode || targetItem.isMatched) continue;
 
             const distance = Vec3.distance(worldPos, targetItem.node.worldPosition);
             

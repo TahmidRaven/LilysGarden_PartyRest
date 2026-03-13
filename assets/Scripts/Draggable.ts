@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, EventTouch, find, tween, UITransform } from 'cc';
 import { GameManager } from './GameManager'; 
+import { MergeItem } from './MergeItem';
 
 const { ccclass } = _decorator;
 
@@ -23,8 +24,10 @@ export class Draggable extends Component {
     public setHomePosition(pos: Vec3) {
         this.homePosition = pos.clone();
     }
-
     onTouchStart(event: EventTouch) {
+        const mergeScript = this.getComponent(MergeItem);
+        if (mergeScript && mergeScript.isMatched) return; 
+
         const loc = event.getUILocation();
         this.startTouchPos.set(loc.x, loc.y, 0);
         this.isDragging = false; 

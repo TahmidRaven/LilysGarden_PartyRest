@@ -3,10 +3,15 @@ const { ccclass, property } = _decorator;
 
 @ccclass('MergeItem')
 export class MergeItem extends Component {
-    @property  
+    @property
     public colorName: string = 'red'; 
 
+    // This flag prevents other items from "seeing" this one during a search
+    public isMatched: boolean = false;
+
     public playMatchAnimation() {
+        this.isMatched = true; // Mark as busy immediately
+        
         tween(this.node)
             .to(0.1, { scale: new Vec3(1.2, 1.2, 1) }, { easing: 'sineOut' })
             .to(0.15, { scale: Vec3.ZERO }, { easing: 'sineIn' })
