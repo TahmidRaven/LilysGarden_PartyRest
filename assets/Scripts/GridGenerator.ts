@@ -58,7 +58,7 @@ export class GridGenerator extends Component {
         
         if (matches === 0) return 40;
         if (matches === 1) return 25;
-        if (matches === 2) return 12;
+        if (matches === 2) return 19;
         
         return 12; 
     }
