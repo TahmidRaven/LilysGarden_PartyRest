@@ -2,6 +2,7 @@ import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UI
 import { MergeItem } from './MergeItem';
 import { UIElemAnim } from './UIElemAnim'; 
 import { VictoryScreen } from './VictoryScreen'; 
+import { AudioContent } from './AudioContent'; // Import the AudioContent class
 
 const { ccclass, property } = _decorator;
 
@@ -10,7 +11,10 @@ export class GameManager extends Component {
     public static instance: GameManager = null!;
 
     @property(Node) public gridContainer: Node = null!;
-    @property(AudioSource) public audioSource: AudioSource = null!;
+    
+    // Updated: Global Audio List
+    @property([AudioContent]) 
+    public audioList: AudioContent[] = [];
     
     @property(Sprite) public backgroundSprite: Sprite = null!; 
     @property([SpriteFrame]) public sceneFrames: Array<SpriteFrame> = []; 
@@ -18,27 +22,35 @@ export class GameManager extends Component {
     @property(UIElemAnim) public uiAnim: UIElemAnim = null!;
     @property(VictoryScreen) public victoryScreen: VictoryScreen = null!; 
 
-    // New Label Properties for Counters
     @property(Label) public fountainLabel: Label = null!;
     @property(Label) public gardenLabel: Label = null!;
     @property(Label) public lanternLabel: Label = null!;
 
     private currentStep: number = 1;
     private matchCounter: number = 0;
-
-    // Individual progress trackers
     private fountainCount: number = 0;
     private gardenCount: number = 0;
     private lanternCount: number = 0;
 
     onLoad() {
         GameManager.instance = this;
-        this.updateLabels(); // Initialize labels with 0/3
+        this.updateLabels(); 
+    }
+
+    start() {
+        this.playSFX("BGM"); // Start background music on launch
     }
 
     /**
-     * Updates the text strings on the UI labels with newlines
+     * Helper to play sound by name from the list
      */
+    public playSFX(name: string) {
+        const target = this.audioList.find(a => a.AudioName === name);
+        if (target) {
+            target.play();
+        }
+    }
+
     private updateLabels() {
         if (this.fountainLabel) this.fountainLabel.string = `Fix Fountain\n${this.fountainCount} / 3`;
         if (this.gardenLabel) this.gardenLabel.string = `Fix Garden\n${this.gardenCount} / 3`;
@@ -51,34 +63,23 @@ export class GameManager extends Component {
         let frameIndex = 0;
         let isFinalStep = false;
 
-        // Logic updated to track individual counts and update UI
         if (this.currentStep === 1 && color === 'purple') {
             this.fountainCount++;
             this.matchCounter++;
-            if (this.matchCounter >= 3) {
-                shouldTriggerStep = true;
-                frameIndex = 1;
-            }
+            if (this.matchCounter >= 3) { shouldTriggerStep = true; frameIndex = 1; }
         } 
         else if (this.currentStep === 2 && color === 'yellow') {
             this.gardenCount++;
             this.matchCounter++;
-            if (this.matchCounter >= 3) {
-                shouldTriggerStep = true;
-                frameIndex = 2;
-            }
+            if (this.matchCounter >= 3) { shouldTriggerStep = true; frameIndex = 2; }
         } 
         else if (this.currentStep === 3 && color === 'orange') {
             this.lanternCount++;
             this.matchCounter++;
-            if (this.matchCounter >= 3) {
-                shouldTriggerStep = true;
-                frameIndex = 3;
-                isFinalStep = true;
-            }
+            if (this.matchCounter >= 3) { shouldTriggerStep = true; frameIndex = 3; isFinalStep = true; }
         }
 
-        this.updateLabels(); // Refresh the labels after every match
+        this.updateLabels();
 
         if (shouldTriggerStep) {
             this.scheduleOnce(() => {
@@ -90,6 +91,8 @@ export class GameManager extends Component {
 
     private executeStepTransition(frameIndex: number, isFinalStep: boolean) {
         if (!this.uiAnim) return;
+
+        this.playSFX("SceneTransition"); // Play transition sound
 
         this.uiAnim.moveUIOut(() => {
             this.revealNewScene(frameIndex, () => {
@@ -136,10 +139,10 @@ export class GameManager extends Component {
 
             if (Vec3.distance(worldPos, targetItem.node.worldPosition) < 60) {
                 if (dragScript.colorName === targetItem.colorName) {
+                    this.playSFX("Merge"); // Play merge sound
                     this.reportMergeEvent(dragScript.colorName);
                     dragScript.playMatchAnimation(); 
                     targetItem.playMatchAnimation(); 
-                    if (this.audioSource) this.audioSource.play();
                     return true;
                 }
             }

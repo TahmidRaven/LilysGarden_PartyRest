@@ -11,13 +11,10 @@ export class MergeItem extends Component {
     public colorName: string = 'red';
 
     @property(Prefab)
-    public destroyAnimPrefab: Prefab = null!; //
+    public destroyAnimPrefab: Prefab = null!;
 
     public isMatched: boolean = false;
 
-    /**
-     * Maps the string colorName to a Cocos Color object.
-     */
     private getColorValue(name: string): Color {
         const lowerName = name.toLowerCase();
         if (lowerName === 'purple') return new Color(150, 0, 255);
@@ -30,37 +27,35 @@ export class MergeItem extends Component {
     public playMatchAnimation() {
         this.isMatched = true;
         
+        // Trigger Destroy Audio
+        if (GameManager.instance) {
+            GameManager.instance.playSFX("Destory");
+        }
+
         const dragComp = this.getComponent(Draggable);
         const spawnPos = dragComp ? dragComp.getHomePosition() : this.node.position;
 
-        // --- Handle BlockDestroyAnim ---
         if (this.destroyAnimPrefab) {
             const animNode = instantiate(this.destroyAnimPrefab);
-            
-            // Ensure it spawns in the same container as the items
             animNode.setParent(this.node.parent); 
             animNode.setWorldPosition(this.node.worldPosition);
             animNode.setScale(new Vec3(1, 1, 1));
 
-            // Apply the color to the Sprite component
             const sprite = animNode.getComponent(Sprite) || animNode.getComponentInChildren(Sprite);
             if (sprite) {
                 sprite.color = this.getColorValue(this.colorName);
             }
 
-            // Manually play the animation if 'Play On Load' is not set
             const animComp = animNode.getComponent(Animation) || animNode.getComponentInChildren(Animation);
             if (animComp) {
                 animComp.play();
             }
 
-            // Self-destruct the animation node after 1 second to clean up the hierarchy
             this.scheduleOnce(() => {
                 if (animNode.isValid) animNode.destroy();
             }, 1.0);
         }
 
-        // --- Visual feedback for the merging item ---
         tween(this.node)
             .to(0.1, { scale: new Vec3(1.2, 1.2, 1) }, { easing: 'sineOut' })
             .to(0.15, { scale: Vec3.ZERO }, { easing: 'sineIn' })

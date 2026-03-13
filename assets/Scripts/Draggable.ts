@@ -30,7 +30,7 @@ export class Draggable extends Component {
 
     onTouchStart(event: EventTouch) {
         const mergeItem = this.getComponent(MergeItem);
-        if (mergeItem && mergeItem.isMatched) return; // Non-blocking safety check
+        if (mergeItem && mergeItem.isMatched) return; 
 
         const loc = event.getUILocation();
         this.startTouchPos.set(loc.x, loc.y, 0);
@@ -79,6 +79,9 @@ export class Draggable extends Component {
 
     public returnToHome() {
         if (!this.node.isValid || !GameManager.instance) return;
+
+        // Play ReturnHome Audio
+        GameManager.instance.playSFX("ReturnHome");
 
         tween(this.node).stop();
         const grid = GameManager.instance.gridContainer;
