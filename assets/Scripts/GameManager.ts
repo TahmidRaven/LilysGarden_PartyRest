@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween } from 'cc';
 import { MergeItem } from './MergeItem';
+import { UIElemAnim } from './UIElemAnim'; 
 
 const { ccclass, property } = _decorator;
 
@@ -13,6 +14,8 @@ export class GameManager extends Component {
     @property(Sprite) public backgroundSprite: Sprite = null!; 
     @property([SpriteFrame]) public sceneFrames: Array<SpriteFrame> = []; 
 
+    @property(UIElemAnim) public uiAnim: UIElemAnim = null!;
+
     private currentStep: number = 1;
     private matchCounter: number = 0;
 
@@ -25,22 +28,31 @@ export class GameManager extends Component {
 
         if (this.currentStep === 1 && color === 'purple') {
             this.matchCounter++;
+            console.log(`${color} merge ${this.matchCounter}/3`);
+            
             if (this.matchCounter >= 3) {
                 this.revealNewScene(1); 
+                if (this.uiAnim) this.uiAnim.playTransition(); 
                 this.moveToNextStep();
             }
         } 
         else if (this.currentStep === 2 && color === 'yellow') {
             this.matchCounter++;
+            console.log(`${color} merge ${this.matchCounter}/3`);
+            
             if (this.matchCounter >= 3) {
                 this.revealNewScene(2); 
+                if (this.uiAnim) this.uiAnim.playTransition(); 
                 this.moveToNextStep();
             }
         } 
         else if (this.currentStep === 3 && color === 'orange') {
             this.matchCounter++;
+            console.log(`${color} merge ${this.matchCounter}/3`);
+            
             if (this.matchCounter >= 3) {
                 this.revealNewScene(3); 
+                if (this.uiAnim) this.uiAnim.playTransition();
                 this.moveToNextStep();
             }
         }
