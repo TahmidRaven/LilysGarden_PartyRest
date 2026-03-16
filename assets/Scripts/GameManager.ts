@@ -12,7 +12,7 @@ export class GameManager extends Component {
     public static instance: GameManager = null!;
 
     @property(Node) public gridContainer: Node = null!;
-    @property(Node) public introScene: Node = null!; // Reference to the Intro Scene node
+    @property(Node) public introScene: Node = null!; 
     
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
@@ -27,8 +27,7 @@ export class GameManager extends Component {
     @property(Label) public gardenLabel: Label = null!;
     @property(Label) public lanternLabel: Label = null!;
 
-    @property(Animation) public lilyAnimation: Animation = null!; // Reference for the Lily node animation
-
+    @property(Animation) public lilyAnimation: Animation = null!; 
 
     @property(Node) public completedStep01: Node = null!;
     @property(Node) public completedStep02: Node = null!;
@@ -39,18 +38,16 @@ export class GameManager extends Component {
     private fountainCount: number = 0;
     private gardenCount: number = 0;
     private lanternCount: number = 0;
-    private hasGameStarted: boolean = false; // Flag to track the first tap
+    private hasGameStarted: boolean = false; 
 
     onLoad() {
         GameManager.instance = this;
         this.updateLabels(); 
 
-        // Hide UI elements initially
         if (this.uiAnim) {
             this.uiAnim.setUIVisible(false);
         }
 
-        // Listen for the first touch to start the game
         this.node.on(Node.EventType.TOUCH_START, this.handleFirstTap, this);
     }
 
@@ -58,26 +55,20 @@ export class GameManager extends Component {
         if (this.hasGameStarted) return;
         this.hasGameStarted = true;
 
-        // Destroy the intro scene and show the UI
         if (this.introScene) {
             this.introScene.destroy();
         }
 
         if (this.uiAnim) {
             this.uiAnim.setUIVisible(true);
-            this.uiAnim.returnToOriginal(); // Optional: use existing animation to bring UI in
+            this.uiAnim.returnToOriginal(); 
         }
 
-        // Unsubscribe from the start event
         this.node.off(Node.EventType.TOUCH_START, this.handleFirstTap, this);
-
-        // Start BGM on the first user interaction
         this.playSFX("BGM");
     }
 
-    start() {
-        // BGM is now handled in handleFirstTap for better browser compatibility
-    }
+    start() {}
 
     public getCurrentStep(): number {
         return this.currentStep;
@@ -95,30 +86,29 @@ export class GameManager extends Component {
     }
 
     private updateLabels() {
-        // Step 1: Fountain
+        // Required matches is 2 (which means 4 items total)
         if (this.fountainLabel) {
-            const isDone = this.fountainCount >= 3;
+            const isDone = this.fountainCount >= 2;
             this.fountainLabel.node.active = !isDone;
             if (this.completedStep01) this.completedStep01.active = isDone;
-            this.fountainLabel.string = `Fix Fountain\n${this.fountainCount} / 3`;
+            this.fountainLabel.string = `Fix Fountain\n${this.fountainCount} / 2`;
         }
 
-        // Step 2: Garden
         if (this.gardenLabel) {
-            const isDone = this.gardenCount >= 3;
+            const isDone = this.gardenCount >= 2;
             this.gardenLabel.node.active = !isDone;
             if (this.completedStep02) this.completedStep02.active = isDone;
-            this.gardenLabel.string = `Fix Garden\n${this.gardenCount} / 3`;
+            this.gardenLabel.string = `Fix Garden\n${this.gardenCount} / 2`;
         }
 
-        // Step 3: Lantern
         if (this.lanternLabel) {
-            const isDone = this.lanternCount >= 3;
+            const isDone = this.lanternCount >= 2;
             this.lanternLabel.node.active = !isDone;
             if (this.completedStep03) this.completedStep03.active = isDone;
-            this.lanternLabel.string = `Lantern\n${this.lanternCount} / 3`;
+            this.lanternLabel.string = `Lantern\n${this.lanternCount} / 2`;
         }
     }
+
     private reportMergeEvent(colorName: string) {
         const color = colorName.toLowerCase();
         let shouldTriggerStep = false;
@@ -128,25 +118,25 @@ export class GameManager extends Component {
         if (this.currentStep === 1 && color === 'purple') {
             this.fountainCount++;
             this.matchCounter++;
-            if (this.matchCounter >= 3) { shouldTriggerStep = true; frameIndex = 1; }
+            if (this.matchCounter >= 2) { shouldTriggerStep = true; frameIndex = 1; }
         } 
         else if (this.currentStep === 2 && color === 'yellow') {
             this.gardenCount++;
             this.matchCounter++;
-            if (this.matchCounter >= 3) { shouldTriggerStep = true; frameIndex = 2; }
+            if (this.matchCounter >= 2) { shouldTriggerStep = true; frameIndex = 2; }
         } 
         else if (this.currentStep === 3 && color === 'orange') {
             this.lanternCount++;
             this.matchCounter++;
-            if (this.matchCounter >= 3) { shouldTriggerStep = true; frameIndex = 3; isFinalStep = true; }
+            if (this.matchCounter >= 2) { shouldTriggerStep = true; frameIndex = 3; isFinalStep = true; }
         }
 
         this.updateLabels();
 
         if (shouldTriggerStep) {
             this.scheduleOnce(() => {
+                this.moveToNextStep(); 
                 this.executeStepTransition(frameIndex, isFinalStep);
-                this.moveToNextStep();
             }, 0.35); 
         }
     }
@@ -160,7 +150,6 @@ export class GameManager extends Component {
             this.revealNewScene(frameIndex, () => {
                 this.scheduleOnce(() => {
                     if (isFinalStep) {
-                        // Switch to happy animation and wait 2 seconds before victory screen
                         if (this.lilyAnimation) {
                             this.lilyAnimation.play('Lily_happy');
                         }
@@ -171,27 +160,20 @@ export class GameManager extends Component {
 
                     } else {
                         this.uiAnim.returnToOriginal();
-                        this.clearOldStepItems();
+                        this.resetBoardForCurrentStep();
                     }
                 }, 0.5);
             });
         });
     }
 
-    private clearOldStepItems() {
-        const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
-        const generator = this.gridContainer.getComponent(GridGenerator);
-        
-        allItems.forEach(item => {
-            const color = item.colorName.toLowerCase();
-            if ((this.currentStep === 2 && color === 'purple') || 
-                (this.currentStep === 3 && color === 'yellow')) {
-                
-                const pos = item.node.position.clone();
-                item.node.destroy();
-                if (generator) generator.refillSlot(pos);
+    private resetBoardForCurrentStep() {
+        if (this.gridContainer) {
+            const generator = this.gridContainer.getComponent(GridGenerator);
+            if (generator) {
+                generator.generateGridForStep(this.currentStep);
             }
-        });
+        }
     }
 
     private revealNewScene(frameIndex: number, onComplete?: Function) {
