@@ -53,12 +53,10 @@ export class GridGenerator extends Component {
 
         let deck: Prefab[] = [];
 
-        // Add exactly 4 target items
         for (let i = 0; i < 4; i++) {
             if (targetPrefab) deck.push(targetPrefab);
         }
 
-        // Fill the remaining 12 slots randomly with pure filler items
         const remainingSlots = (this.rows * this.cols) - deck.length;
         for (let i = 0; i < remainingSlots; i++) {
             if (randomPrefabs.length > 0) {
@@ -67,7 +65,6 @@ export class GridGenerator extends Component {
             }
         }
 
-        // Shuffle the deck so targets aren't clumped
         for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -84,6 +81,11 @@ export class GridGenerator extends Component {
                     index++;
                 }
             }
+        }
+
+        // Reduced from 1.2 to 0.7: Show hint right as the items finish scaling in (0.5s spawn anim + 0.2s buffer)
+        if (GameManager.instance) {
+            GameManager.instance.startHandGuideWithDelay(0.5);
         }
     }
 

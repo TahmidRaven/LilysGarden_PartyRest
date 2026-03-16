@@ -32,6 +32,10 @@ export class Draggable extends Component {
         const mergeItem = this.getComponent(MergeItem);
         if (mergeItem && mergeItem.isMatched) return; 
 
+        if (GameManager.instance) {
+            GameManager.instance.stopHandGuide();
+        }
+
         const loc = event.getUILocation();
         this.startTouchPos.set(loc.x, loc.y, 0);
         this.isDragging = false; 
@@ -73,6 +77,10 @@ export class Draggable extends Component {
 
         if (!matchFound) {
             this.returnToHome();
+            // Restart the guide almost instantly if they fail to match
+            if (GameManager.instance) {
+                GameManager.instance.startHandGuideWithDelay(0.3); // Was 1.0
+            }
         }
         this.isDragging = false; 
     }
@@ -80,7 +88,6 @@ export class Draggable extends Component {
     public returnToHome() {
         if (!this.node.isValid || !GameManager.instance) return;
 
-        // Play ReturnHome Audio
         GameManager.instance.playSFX("ReturnHome");
 
         tween(this.node).stop();

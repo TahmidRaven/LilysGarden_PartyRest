@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween, Label, Animation } from 'cc';
+import { _decorator, Component, Node, Vec3, AudioSource, Sprite, SpriteFrame, UIOpacity, tween, Label, Animation, Tween } from 'cc';
 import { MergeItem } from './MergeItem';
 import { UIElemAnim } from './UIElemAnim'; 
 import { VictoryScreen } from './VictoryScreen'; 
@@ -33,12 +33,15 @@ export class GameManager extends Component {
     @property(Node) public completedStep02: Node = null!;
     @property(Node) public completedStep03: Node = null!;
 
+    @property(Node) public handGuide: Node = null!;
+
     private currentStep: number = 1;
     private matchCounter: number = 0;
     private fountainCount: number = 0;
     private gardenCount: number = 0;
     private lanternCount: number = 0;
     private hasGameStarted: boolean = false; 
+    private guideTween: Tween<Node> | null = null;
 
     onLoad() {
         GameManager.instance = this;
@@ -46,6 +49,10 @@ export class GameManager extends Component {
 
         if (this.uiAnim) {
             this.uiAnim.setUIVisible(false);
+        }
+
+        if (this.handGuide) {
+            this.handGuide.active = false; 
         }
 
         this.node.on(Node.EventType.TOUCH_START, this.handleFirstTap, this);
@@ -86,7 +93,6 @@ export class GameManager extends Component {
     }
 
     private updateLabels() {
-        // Required matches is 2 (which means 4 items total)
         if (this.fountainLabel) {
             const isDone = this.fountainCount >= 2;
             this.fountainLabel.node.active = !isDone;
@@ -108,6 +114,70 @@ export class GameManager extends Component {
             this.lanternLabel.string = `Lantern\n${this.lanternCount} / 2`;
         }
     }
+
+    private getTargetColor(): string {
+        if (this.currentStep === 1) return 'purple';
+        if (this.currentStep === 2) return 'yellow';
+        if (this.currentStep === 3) return 'orange';
+        return '';
+    }
+
+    // --- FASTER HAND GUIDE LOGIC ---
+    public startHandGuideWithDelay(delay: number = 0.3) { // Default delay reduced to 0.3s
+        this.stopHandGuide();
+        this.scheduleOnce(this.startHandGuide, delay);
+    }
+
+    public startHandGuide() {
+        this.stopHandGuide();
+        if (!this.handGuide || !this.gridContainer) return;
+
+        const targetColor = this.getTargetColor();
+        const allItems = this.gridContainer.getComponentsInChildren(MergeItem);
+        
+        const targets = allItems.filter(item => item.colorName.toLowerCase() === targetColor && !item.isMatched);
+
+        if (targets.length >= 2) {
+            const startNode = targets[0].node;
+            const endNode = targets[1].node;
+
+            this.handGuide.active = true;
+            this.handGuide.setWorldPosition(startNode.worldPosition);
+
+            this.guideTween = tween(this.handGuide)
+                .call(() => {
+                    if (!startNode.isValid || !endNode.isValid || targets[0].isMatched || targets[1].isMatched) {
+                        this.startHandGuide();
+                        return;
+                    }
+                    this.handGuide.active = true;
+                    this.handGuide.setWorldPosition(startNode.worldPosition);
+                })
+                .to(0.8, { worldPosition: endNode.worldPosition }, { easing: 'sineInOut' }) // Hand movement slightly faster (0.8s instead of 1.0s)
+                .call(() => {
+                    this.handGuide.active = false;
+                })
+                .delay(0.2) // FASTER REPEAT: Only wait 0.2 seconds before showing the hint again! (was 1.0s)
+                .call(() => {
+                    this.startHandGuide(); 
+                })
+                .start();
+        } else {
+            this.handGuide.active = false;
+        }
+    }
+
+    public stopHandGuide() {
+        this.unschedule(this.startHandGuide);
+        if (this.guideTween) {
+            this.guideTween.stop();
+            this.guideTween = null;
+        }
+        if (this.handGuide) {
+            this.handGuide.active = false;
+        }
+    }
+    // -------------------------
 
     private reportMergeEvent(colorName: string) {
         const color = colorName.toLowerCase();
@@ -138,6 +208,9 @@ export class GameManager extends Component {
                 this.moveToNextStep(); 
                 this.executeStepTransition(frameIndex, isFinalStep);
             }, 0.35); 
+        } else {
+            // Point out the next match almost immediately
+            this.startHandGuideWithDelay(0.5); 
         }
     }
 
