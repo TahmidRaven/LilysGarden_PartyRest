@@ -1,6 +1,6 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec3, UITransform, tween } from 'cc';
 import { ItemLevelController } from './ItemLevelController';
-import { DragAndDrop } from './DragAndDrop'; // Import your drag script
+import { DragAndDrop } from './DragAndDrop';
 const { ccclass, property } = _decorator;
 
 @ccclass('ItemData')
@@ -22,17 +22,27 @@ export class GameBoardController extends Component {
     public boardHolder: Node = null;
 
     @property(Node)
-    public grabItemOnTop: Node = null; // New Reference! Drag the scene node here.
+    public grabItemOnTop: Node = null; 
 
+    /**
+     * Initializes the board by spawning starting items (Level 0).
+     * Optimized for a faster "burst" feel.
+     */
     public initBoard() {
-        if (this.itemDatabase.length === 0 || !this.boardHolder) return;
+        if (this.itemDatabase.length === 0 || !this.boardHolder) {
+            console.warn("GameBoardController: itemDatabase is empty or boardHolder is not assigned.");
+            return;
+        }
 
-        this.itemDatabase.forEach((itemGroup, groupIndex) => {
+        let count = 0;
+        this.itemDatabase.forEach((itemGroup) => {
             for (let i = 0; i < 4; i++) {
-                const delay = (groupIndex * 4 + i) * 0.1;
+                // Reduced delay from 0.1 to 0.04 for a much faster sequence
+                const delay = count * 0.04; 
                 this.scheduleOnce(() => {
                     this.spawnLevelZeroItem(itemGroup);
                 }, delay);
+                count++;
             }
         });
     }
@@ -44,26 +54,36 @@ export class GameBoardController extends Component {
         const newItem = instantiate(prefab);
         newItem.parent = this.boardHolder;
 
-        // --- Set Position & Pop Juice ---
+        // --- Random Position Logic ---
         const uiTransform = this.boardHolder.getComponent(UITransform);
-        const randomX = (Math.random() - 0.5) * (uiTransform.contentSize.width * 0.8);
-        const startY = uiTransform.contentSize.height / 2;
-        newItem.setPosition(new Vec3(randomX, startY, 0));
+        if (uiTransform) {
+            const randomX = (Math.random() - 0.5) * (uiTransform.contentSize.width * 0.8);
+            
+            // Added a small random Y offset (±20) to prevent physics overlap "lag"
+            const baseYSpan = uiTransform.contentSize.height / 2;
+            const randomYOffset = (Math.random() - 0.5) * 40; 
+            
+            newItem.setPosition(new Vec3(randomX, baseYSpan + randomYOffset, 0));
+        }
 
+        // --- Spawning Animation ---
+        // Shortened duration from 0.5 to 0.25 for a "juicier" feel
         newItem.setScale(new Vec3(0, 0, 0));
-        tween(newItem).to(0.5, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' }).start();
+        tween(newItem)
+            .to(0.25, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+            .start();
 
-        // --- Injection: Give the item the references it needs ---
+        // --- Data Injection ---
         const controller = newItem.getComponent(ItemLevelController);
         if (controller) {
             controller.itemType = group.typeName;
             controller.currentLevel = 0;
-            (controller as any).itemDatabase = this.itemDatabase; 
+            controller.itemDatabase = this.itemDatabase; 
         }
 
+        // --- Drag & Drop Setup ---
         const dragScript = newItem.getComponent(DragAndDrop);
         if (dragScript) {
-            // This is the fix: Assign the scene reference at runtime
             dragScript.grabLayer = this.grabItemOnTop; 
         }
     }
