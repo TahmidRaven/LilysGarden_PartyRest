@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType } from 'cc';
+import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType, Animation } from 'cc';
 import { GameBoardController } from './GameBoardController';
 import { VictoryScreen } from './VictoryScreen';
 import { AudioContent } from './AudioContent';
@@ -11,6 +11,9 @@ export class GameManager extends Component {
     @property(GameBoardController) public gameBoardController: GameBoardController = null;
     @property(VictoryScreen) public victoryScreen: VictoryScreen = null;
 
+    @property(Node) public playNowTop: Node = null;
+    @property(Node) public logoTop: Node = null;
+
     @property(Node) public boardHolderNode: Node = null;
     @property(Node) public boardHolderMovePos: Node = null;
 
@@ -19,11 +22,12 @@ export class GameManager extends Component {
     @property(Sprite) public lampSprite: Sprite = null;
     @property(Node) public lightsNode: Node = null;
 
+    @property(Node) public lilyNode: Node = null; 
+
     @property(SpriteFrame) public fixedTableSF: SpriteFrame = null;
     @property(SpriteFrame) public fixedLampSF: SpriteFrame = null;
     @property(SpriteFrame) public fixedGardenSF: SpriteFrame = null;
 
-    // --- Audio Array ---
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
 
@@ -33,10 +37,14 @@ export class GameManager extends Component {
     private _isTransitioning = false;
     private _originalBoardPos: Vec3 = new Vec3();
 
+    // Store original positions to calculate offsets correctly
+    private _logoOriginalPos: Vec3 = new Vec3();
+    private _playNowOriginalPos: Vec3 = new Vec3();
+
     public static Instance: GameManager = null;
 
     onLoad() { 
-        GameManager.Instance = this; 
+        GameManager.Instance = this;
         
         if (this.boardHolderNode) {
             this.boardHolderNode.active = false;
@@ -44,6 +52,19 @@ export class GameManager extends Component {
         }
         
         if (this.lightsNode) this.lightsNode.active = false;
+        if (this.lilyNode) this.lilyNode.active = false; 
+
+        // Setup Top UI: Store positions and move them up 300 units
+        if (this.logoTop) {
+            this._logoOriginalPos = this.logoTop.position.clone();
+            this.logoTop.setPosition(this._logoOriginalPos.x, this._logoOriginalPos.y + 300, this._logoOriginalPos.z);
+            this.logoTop.active = false;
+        }
+        if (this.playNowTop) {
+            this._playNowOriginalPos = this.playNowTop.position.clone();
+            this.playNowTop.setPosition(this._playNowOriginalPos.x, this._playNowOriginalPos.y + 300, this._playNowOriginalPos.z);
+            this.playNowTop.active = false;
+        }
     }
 
     start() {
@@ -52,21 +73,18 @@ export class GameManager extends Component {
         }
     }
 
-    /**
-     * Finds and plays audio based on the AudioName property in the AudioContent script
-     */
     public playAudio(name: string) {
         const audio = this.audioList.find(a => a.AudioName === name);
         if (audio) {
             audio.play();
-        } else {
-            console.warn(`Audio with name ${name} not found in GameManager audioList.`);
         }
     }
 
     private onFirstTouch() {
-        // Play BGM on first touch to bypass browser audio restrictions
         this.playAudio("BGM");
+
+        // Drop down the Top UI
+        this.animateTopUI(true);
 
         if (this.boardHolderNode) {
             this.boardHolderNode.active = true;
@@ -75,14 +93,30 @@ export class GameManager extends Component {
                 .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
                 .start();
         }
+        if (this.gameBoardController) this.gameBoardController.initBoard();
+        if (this.initialSceneNode) this.initialSceneNode.destroy();
+    }
 
-        if (this.gameBoardController) {
-            this.gameBoardController.initBoard();
-        }
-        
-        if (this.initialSceneNode) {
-            this.initialSceneNode.destroy();
-        }
+    private animateTopUI(show: boolean) {
+        const duration = 0.6;
+        const easing = show ? 'backOut' : 'backIn';
+
+        [this.logoTop, this.playNowTop].forEach(node => {
+            if (!node) return;
+
+            // Determine target: Original position for "show", Original + 300 for "hide"
+            const original = (node === this.logoTop) ? this._logoOriginalPos : this._playNowOriginalPos;
+            const targetY = show ? original.y : original.y + 300;
+
+            if (show) node.active = true;
+
+            tween(node)
+                .to(duration, { position: new Vec3(original.x, targetY, original.z) }, { easing: easing })
+                .call(() => {
+                    if (!show) node.active = false;
+                })
+                .start();
+        });
     }
 
     private setAllItemsPhysics(isKinematic: boolean) {
@@ -91,7 +125,6 @@ export class GameManager extends Component {
         bodies.forEach(rb => {
             rb.type = isKinematic ? ERigidBody2DType.Kinematic : ERigidBody2DType.Dynamic;
             rb.linearVelocity = Vec2.ZERO;
-            rb.angularVelocity = 0;
         });
     }
 
@@ -110,9 +143,8 @@ export class GameManager extends Component {
         parentUI.convertToNodeSpaceAR(targetWorldPos, targetLocalPos);
 
         const restoredCount = [this._tableRestored, this._lampRestored, this._gardenRestored].filter(v => v).length;
-        const isFinalMerge = restoredCount === 3;
+        const isFinalMerge = restoredCount === 3; 
 
-        // Play Transition SFX
         this.playAudio("Transition");
 
         const seq = tween(this.boardHolderNode)
@@ -122,18 +154,28 @@ export class GameManager extends Component {
             .to(0.8, { position: targetLocalPos }, { easing: 'expoInOut' })
             .call(() => {
                 restorationTask();
-                // Play Merge SFX
             });
 
         if (isFinalMerge) {
+            // Send UI back up before victory screen hits
+            this.animateTopUI(false);
+
             seq.delay(1.0)
+               .call(() => {
+                   if (this.lilyNode) {
+                       this.lilyNode.active = true;
+                       const anim = this.lilyNode.getComponent('cc.Animation') as Animation;
+                       if (anim) anim.play();
+                   }
+               })
+               .delay(3.0) 
                .call(() => {
                    if (this.victoryScreen) this.victoryScreen.show(true);
                    this.playAudio("Win");
                })
                .start();
         } else {
-            seq.delay(1.2)
+            seq.delay(1.5)
                .to(0.7, { position: this._originalBoardPos }, { easing: 'expoOut' })
                .call(() => {
                    this._isTransitioning = false;
@@ -144,6 +186,7 @@ export class GameManager extends Component {
         }
     }
 
+    // ... (Rest of the restoration methods remain the same)
     public restoreTable() {
         if (this._tableRestored) return;
         this._tableRestored = true;
@@ -158,7 +201,7 @@ export class GameManager extends Component {
                 this.scheduleOnce(() => {
                     if (this.lightsNode) {
                         this.lightsNode.active = true;
-                        this.lightsNode.setScale(0, 0, 0);
+                        this.lightsNode.setScale(new Vec3(0, 0, 0));
                         tween(this.lightsNode).to(0.5, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' }).start();
                     }
                 }, 0.15);

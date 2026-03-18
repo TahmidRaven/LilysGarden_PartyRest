@@ -26,7 +26,7 @@ export class GameBoardController extends Component {
 
     /**
      * Initializes the board by spawning starting items (Level 0).
-     * Optimized for a faster "burst" feel.
+     * Now includes 2 additional random spawns at the end of the sequence.
      */
     public initBoard() {
         if (this.itemDatabase.length === 0 || !this.boardHolder) {
@@ -35,9 +35,9 @@ export class GameBoardController extends Component {
         }
 
         let count = 0;
+        // 1. Spawn the standard initial set (4 of each type)
         this.itemDatabase.forEach((itemGroup) => {
             for (let i = 0; i < 4; i++) {
-                // Reduced delay from 0.1 to 0.04 for a much faster sequence
                 const delay = count * 0.04; 
                 this.scheduleOnce(() => {
                     this.spawnLevelZeroItem(itemGroup);
@@ -45,6 +45,30 @@ export class GameBoardController extends Component {
                 count++;
             }
         });
+
+        // 2. Spawn 2 extra random items after the main sequence finished
+        const finalDelay = count * 0.04;
+        this.scheduleOnce(() => {
+            this.spawnRandomItems(2);
+        }, finalDelay);
+    }
+
+    /**
+     * Public method to spawn a specific number of random Level 0 items.
+     * Can be called from other scripts (like ItemLevelController) after a merge.
+     */
+    public spawnRandomItems(amount: number = 2) {
+        if (this.itemDatabase.length === 0) return;
+
+        for (let i = 0; i < amount; i++) {
+            const randomIndex = Math.floor(Math.random() * this.itemDatabase.length);
+            const randomGroup = this.itemDatabase[randomIndex];
+            
+            // Add a tiny stagger delay if spawning multiple
+            this.scheduleOnce(() => {
+                this.spawnLevelZeroItem(randomGroup);
+            }, i * 0.05);
+        }
     }
 
     private spawnLevelZeroItem(group: ItemData) {
@@ -59,7 +83,7 @@ export class GameBoardController extends Component {
         if (uiTransform) {
             const randomX = (Math.random() - 0.5) * (uiTransform.contentSize.width * 0.8);
             
-            // Added a small random Y offset (±20) to prevent physics overlap "lag"
+            // Random Y offset to prevent physics overlap "lag"
             const baseYSpan = uiTransform.contentSize.height / 2;
             const randomYOffset = (Math.random() - 0.5) * 40; 
             
@@ -67,7 +91,6 @@ export class GameBoardController extends Component {
         }
 
         // --- Spawning Animation ---
-        // Shortened duration from 0.5 to 0.25 for a "juicier" feel
         newItem.setScale(new Vec3(0, 0, 0));
         tween(newItem)
             .to(0.25, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
