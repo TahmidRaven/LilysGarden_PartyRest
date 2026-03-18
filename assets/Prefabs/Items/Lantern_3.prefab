@@ -161,6 +161,10 @@
     },
     "itemType": "lamp",
     "currentLevel": 2,
+    "mergeParticlePrefab": {
+      "__uuid__": "eea67d6d-53a8-46ff-8a5c-79bf1689c6bd",
+      "__expectedType__": "cc.Prefab"
+    },
     "_id": ""
   },
   {
