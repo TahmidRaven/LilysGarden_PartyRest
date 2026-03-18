@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType } from 'cc';
 import { GameBoardController } from './GameBoardController';
 import { VictoryScreen } from './VictoryScreen';
+import { AudioContent } from './AudioContent';
 
 const { ccclass, property } = _decorator;
 
@@ -22,6 +23,10 @@ export class GameManager extends Component {
     @property(SpriteFrame) public fixedLampSF: SpriteFrame = null;
     @property(SpriteFrame) public fixedGardenSF: SpriteFrame = null;
 
+    // --- Audio Array ---
+    @property([AudioContent]) 
+    public audioList: AudioContent[] = [];
+
     private _tableRestored = false;
     private _lampRestored = false;
     private _gardenRestored = false;
@@ -33,7 +38,6 @@ export class GameManager extends Component {
     onLoad() { 
         GameManager.Instance = this; 
         
-        // Hide the board holder immediately
         if (this.boardHolderNode) {
             this.boardHolderNode.active = false;
             this._originalBoardPos = this.boardHolderNode.position.clone();
@@ -48,12 +52,24 @@ export class GameManager extends Component {
         }
     }
 
+    /**
+     * Finds and plays audio based on the AudioName property in the AudioContent script
+     */
+    public playAudio(name: string) {
+        const audio = this.audioList.find(a => a.AudioName === name);
+        if (audio) {
+            audio.play();
+        } else {
+            console.warn(`Audio with name ${name} not found in GameManager audioList.`);
+        }
+    }
+
     private onFirstTouch() {
+        // Play BGM on first touch to bypass browser audio restrictions
+        this.playAudio("BGM");
+
         if (this.boardHolderNode) {
-            // Make the board active
             this.boardHolderNode.active = true;
-            
-            // Optional: Fade/Scale in for a "juicier" feel
             this.boardHolderNode.setScale(new Vec3(0, 0, 0));
             tween(this.boardHolderNode)
                 .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
@@ -93,30 +109,30 @@ export class GameManager extends Component {
         const targetLocalPos = new Vec3();
         parentUI.convertToNodeSpaceAR(targetWorldPos, targetLocalPos);
 
-        // Check if this is the final of the 3 merges
         const restoredCount = [this._tableRestored, this._lampRestored, this._gardenRestored].filter(v => v).length;
         const isFinalMerge = restoredCount === 3;
 
+        // Play Transition SFX
+        this.playAudio("Transition");
+
         const seq = tween(this.boardHolderNode)
-            // 1. Shake
             .by(0.07, { position: new Vec3(12, 0, 0) })
             .by(0.07, { position: new Vec3(-24, 0, 0) })
             .to(0.05, { position: this._originalBoardPos })
-            // 2. Slide Out
             .to(0.8, { position: targetLocalPos }, { easing: 'expoInOut' })
             .call(() => {
                 restorationTask();
+                // Play Merge SFX
             });
 
         if (isFinalMerge) {
-            // FINAL MERGE: Stay there and show victory
             seq.delay(1.0)
                .call(() => {
                    if (this.victoryScreen) this.victoryScreen.show(true);
+                   this.playAudio("Win");
                })
                .start();
         } else {
-            // REGULAR MERGE: Come back
             seq.delay(1.2)
                .to(0.7, { position: this._originalBoardPos }, { easing: 'expoOut' })
                .call(() => {

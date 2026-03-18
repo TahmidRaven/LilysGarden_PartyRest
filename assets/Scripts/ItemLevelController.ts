@@ -14,6 +14,11 @@ export class ItemLevelController extends Component {
         const data = this.itemDatabase.find(d => d.typeName === this.itemType);
         
         if (data && data.levelPrefabs[nextLevel]) {
+
+            if (GameManager.Instance) {
+                GameManager.Instance.playAudio("Merge");
+            }
+            
             const nextLevelPrefab = data.levelPrefabs[nextLevel];
             const newNode = instantiate(nextLevelPrefab);
             newNode.parent = this.node.parent;

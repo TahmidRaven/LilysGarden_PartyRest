@@ -1,5 +1,7 @@
 import { _decorator, Component, Node, Vec3, EventTouch, RigidBody2D, ERigidBody2DType, Vec2, Collider2D, Contact2DType, IPhysics2DContact } from 'cc';
 import { ItemLevelController } from './ItemLevelController';
+import { GameManager } from './GameManager'; // Added for audio access
+
 const { ccclass, property } = _decorator;
 
 @ccclass('DragAndDrop')
@@ -9,8 +11,6 @@ export class DragAndDrop extends Component {
     private _rb: RigidBody2D = null;
     private _isDragging: boolean = false;
     private _originalParent: Node = null;
-    
-    // Tracks all items currently touching our sensor
     private _contactNodes: Set<Node> = new Set<Node>();
 
     private readonly GROUP_DRAGGED = 1 << 1;
@@ -66,7 +66,6 @@ export class DragAndDrop extends Component {
 
         let merged = false;
 
-        // 1. Check Physics-based overlaps
         for (const targetNode of this._contactNodes) {
             if (targetNode && targetNode.isValid && this.checkMerge(targetNode)) {
                 merged = true;
@@ -74,13 +73,12 @@ export class DragAndDrop extends Component {
             }
         }
 
-        // 2. Fallback: Proximity check (if physics missed it)
         if (!merged && this._originalParent) {
             const siblings = this._originalParent.children;
             for (const sibling of siblings) {
                 if (sibling === this.node) continue;
                 const dist = Vec3.distance(this.node.worldPosition, sibling.worldPosition);
-                if (dist < 130) { // Adjust threshold based on your item size
+                if (dist < 130) {
                     if (this.checkMerge(sibling)) {
                         merged = true;
                         break;
@@ -89,8 +87,12 @@ export class DragAndDrop extends Component {
             }
         }
 
-        if (!merged) {
+if (!merged) {
             this.returnToBoard();
+            // Use the new playAudio string-based call
+            if (GameManager.Instance) {
+                GameManager.Instance.playAudio("WrongMerge");
+            }
         }
     }
 
@@ -120,7 +122,6 @@ export class DragAndDrop extends Component {
 
         if (!myCtrl || !otherCtrl) return false;
 
-        // Strict Type and Level matching
         if (myCtrl.itemType === otherCtrl.itemType && 
             myCtrl.currentLevel === otherCtrl.currentLevel &&
             myCtrl.currentLevel < 2) {
