@@ -1,5 +1,7 @@
 import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType } from 'cc';
 import { GameBoardController } from './GameBoardController';
+import { VictoryScreen } from './VictoryScreen'; // Added reference to your new script
+
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
@@ -10,6 +12,9 @@ export class GameManager extends Component {
     @property(GameBoardController) public gameBoardController: GameBoardController = null;
     @property(Sprite) public backgroundSprite: Sprite = null;
     @property([SpriteFrame]) public bgStages: SpriteFrame[] = [];
+
+    // Reference to the Victory Screen component
+    @property(VictoryScreen) public victoryScreen: VictoryScreen = null;
 
     private _currentStage: number = 0;
     private _isTransitioning: boolean = false;
@@ -37,14 +42,22 @@ export class GameManager extends Component {
         if (this.gameBoardController) this.gameBoardController.initBoard();
         if (this.initialSceneNode) this.initialSceneNode.destroy();
     }
-
-    public advanceBackground() {
-        this._currentStage++;
-        console.log(`Merge Success! Stage: ${this._currentStage}`);
-        if (this.bgStages.length > this._currentStage && this.backgroundSprite) {
-            this.backgroundSprite.spriteFrame = this.bgStages[this._currentStage];
-        }
+    
+public advanceBackground() {
+    this._currentStage++;
+    console.log(`Merge Success! Stage: ${this._currentStage}`);
+    
+    // Update the background sprite based on stage
+    if (this.bgStages.length > this._currentStage && this.backgroundSprite) {
+        this.backgroundSprite.spriteFrame = this.bgStages[this._currentStage];
     }
+
+    // CHECK FOR VICTORY CONDITION:
+    // If this is the 3rd successful merge/transition, trigger the sequence
+    if (this._currentStage === 3) {
+        this.onFinalLevelReached();
+    }
+}
 
     /**
      * Toggles physics for all items. 
@@ -56,12 +69,15 @@ export class GameManager extends Component {
         const bodies = this.boardHolderNode.getComponentsInChildren(RigidBody2D);
         bodies.forEach(rb => {
             rb.type = isKinematic ? ERigidBody2DType.Kinematic : ERigidBody2DType.Dynamic;
-            // Use new Vec2(0, 0) to fix the 'v2 does not exist' error
             rb.linearVelocity = new Vec2(0, 0);
             rb.angularVelocity = 0;
         });
     }
 
+    /**
+     * Triggered when the final merge level is reached.
+     * Moves board to a target location and back, then shows victory.
+     */
     public onFinalLevelReached() {
         if (this._isTransitioning) return;
         if (!this.boardHolderMovePos) {
@@ -99,6 +115,11 @@ export class GameManager extends Component {
                         // 2. RESTORE PHYSICS
                         this.setAllItemsPhysics(false);
                         console.log("Sequence Complete: Board returned and items restored.");
+
+                        // 3. SHOW VICTORY SCREEN
+                        if (this.victoryScreen) {
+                            this.victoryScreen.show(true);
+                        }
                     })
                     .start();
             }
