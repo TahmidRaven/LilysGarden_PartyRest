@@ -1,128 +1,155 @@
 import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType } from 'cc';
 import { GameBoardController } from './GameBoardController';
-import { VictoryScreen } from './VictoryScreen'; // Added reference to your new script
+import { VictoryScreen } from './VictoryScreen';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
 export class GameManager extends Component {
     @property(Node) public initialSceneNode: Node = null;
-    @property(Node) public boardHolderNode: Node = null;
-    @property(Node) public boardHolderMovePos: Node = null; 
     @property(GameBoardController) public gameBoardController: GameBoardController = null;
-    @property(Sprite) public backgroundSprite: Sprite = null;
-    @property([SpriteFrame]) public bgStages: SpriteFrame[] = [];
-
-    // Reference to the Victory Screen component
     @property(VictoryScreen) public victoryScreen: VictoryScreen = null;
 
-    private _currentStage: number = 0;
-    private _isTransitioning: boolean = false;
+    @property(Node) public boardHolderNode: Node = null;
+    @property(Node) public boardHolderMovePos: Node = null;
+
+    @property(Sprite) public backgroundSprite: Sprite = null;
+    @property(Sprite) public tableSprite: Sprite = null;
+    @property(Sprite) public lampSprite: Sprite = null;
+    @property(Node) public lightsNode: Node = null;
+
+    @property(SpriteFrame) public fixedTableSF: SpriteFrame = null;
+    @property(SpriteFrame) public fixedLampSF: SpriteFrame = null;
+    @property(SpriteFrame) public fixedGardenSF: SpriteFrame = null;
+
+    private _tableRestored = false;
+    private _lampRestored = false;
+    private _gardenRestored = false;
+    private _isTransitioning = false;
     private _originalBoardPos: Vec3 = new Vec3();
 
     public static Instance: GameManager = null;
 
     onLoad() { 
         GameManager.Instance = this; 
+        if (this.lightsNode) this.lightsNode.active = false;
+        if (this.boardHolderNode) this._originalBoardPos = this.boardHolderNode.position.clone();
     }
 
     start() {
-        if (this.boardHolderNode) {
-            this.boardHolderNode.active = false;
-            // Record initial local position
-            this._originalBoardPos = this.boardHolderNode.position.clone();
-        }
         if (this.initialSceneNode) {
             this.initialSceneNode.on(Node.EventType.TOUCH_START, this.onFirstTouch, this);
         }
     }
 
     private onFirstTouch() {
-        if (this.boardHolderNode) this.boardHolderNode.active = true;
         if (this.gameBoardController) this.gameBoardController.initBoard();
         if (this.initialSceneNode) this.initialSceneNode.destroy();
     }
-    
-public advanceBackground() {
-    this._currentStage++;
-    console.log(`Merge Success! Stage: ${this._currentStage}`);
-    
-    // Update the background sprite based on stage
-    if (this.bgStages.length > this._currentStage && this.backgroundSprite) {
-        this.backgroundSprite.spriteFrame = this.bgStages[this._currentStage];
-    }
 
-    // CHECK FOR VICTORY CONDITION:
-    // If this is the 3rd successful merge/transition, trigger the sequence
-    if (this._currentStage === 3) {
-        this.onFinalLevelReached();
-    }
-}
-
-    /**
-     * Toggles physics for all items. 
-     * Kinematic = items follow the parent board perfectly and ignore gravity.
-     * Dynamic = items fall and collide normally.
-     */
     private setAllItemsPhysics(isKinematic: boolean) {
         if (!this.boardHolderNode) return;
         const bodies = this.boardHolderNode.getComponentsInChildren(RigidBody2D);
         bodies.forEach(rb => {
             rb.type = isKinematic ? ERigidBody2DType.Kinematic : ERigidBody2DType.Dynamic;
-            rb.linearVelocity = new Vec2(0, 0);
+            rb.linearVelocity = Vec2.ZERO;
             rb.angularVelocity = 0;
         });
     }
 
-    /**
-     * Triggered when the final merge level is reached.
-     * Moves board to a target location and back, then shows victory.
-     */
-    public onFinalLevelReached() {
-        if (this._isTransitioning) return;
-        if (!this.boardHolderMovePos) {
-            console.error("boardHolderMovePos not assigned!");
-            return;
-        }
-
+    private executeMergeSequence(restorationTask: () => void) {
+        if (this._isTransitioning || !this.boardHolderNode || !this.boardHolderMovePos) return;
         this._isTransitioning = true;
-        console.log(">>> FINAL LEVEL REACHED: Starting Transition <<<");
 
-        if (this.boardHolderNode) {
-            // Disable widget so it doesn't fight the tween
-            const widget = this.boardHolderNode.getComponent(Widget);
-            if (widget) widget.enabled = false;
+        const widget = this.boardHolderNode.getComponent(Widget);
+        if (widget) widget.enabled = false;
 
-            // 1. LOCK ITEMS TO BOARD
-            this.setAllItemsPhysics(true);
+        this.setAllItemsPhysics(true);
 
-            const targetWorldPos = this.boardHolderMovePos.worldPosition;
-            const parentUITransform = this.boardHolderNode.parent.getComponent(UITransform);
-            
-            if (parentUITransform) {
-                const targetLocalPos = new Vec3();
-                parentUITransform.convertToNodeSpaceAR(targetWorldPos, targetLocalPos);
+        const targetWorldPos = this.boardHolderMovePos.worldPosition;
+        const parentUI = this.boardHolderNode.parent.getComponent(UITransform);
+        const targetLocalPos = new Vec3();
+        parentUI.convertToNodeSpaceAR(targetWorldPos, targetLocalPos);
 
-                tween(this.boardHolderNode)
-                    .to(1.2, { position: targetLocalPos }, { easing: 'expoInOut' })
-                    .call(() => console.log("Sequence: Board at target location."))
-                    .delay(2.0) 
-                    .to(1.0, { position: this._originalBoardPos }, { easing: 'expoOut' })
-                    .call(() => {
-                        this._isTransitioning = false;
-                        if (widget) widget.enabled = true;
-                        
-                        // 2. RESTORE PHYSICS
-                        this.setAllItemsPhysics(false);
-                        console.log("Sequence Complete: Board returned and items restored.");
+        // Check if this is the final of the 3 merges
+        const restoredCount = [this._tableRestored, this._lampRestored, this._gardenRestored].filter(v => v).length;
+        const isFinalMerge = restoredCount === 3;
 
-                        // 3. SHOW VICTORY SCREEN
-                        if (this.victoryScreen) {
-                            this.victoryScreen.show(true);
-                        }
-                    })
-                    .start();
-            }
+        const seq = tween(this.boardHolderNode)
+            // 1. Shake
+            .by(0.07, { position: new Vec3(12, 0, 0) })
+            .by(0.07, { position: new Vec3(-24, 0, 0) })
+            .to(0.05, { position: this._originalBoardPos })
+            // 2. Slide Out
+            .to(0.8, { position: targetLocalPos }, { easing: 'expoInOut' })
+            .call(() => {
+                restorationTask();
+            });
+
+        if (isFinalMerge) {
+            // FINAL MERGE: Stay there and show victory
+            seq.delay(1.0)
+               .call(() => {
+                   if (this.victoryScreen) this.victoryScreen.show(true);
+               })
+               .start();
+        } else {
+            // REGULAR MERGE: Come back
+            seq.delay(1.2)
+               .to(0.7, { position: this._originalBoardPos }, { easing: 'expoOut' })
+               .call(() => {
+                   this._isTransitioning = false;
+                   if (widget) widget.enabled = true;
+                   this.setAllItemsPhysics(false);
+               })
+               .start();
         }
+    }
+
+    public restoreTable() {
+        if (this._tableRestored) return;
+        this._tableRestored = true;
+        this.executeMergeSequence(() => this.applyJuice(this.tableSprite.node, this.fixedTableSF));
+    }
+
+    public restoreLamp() {
+        if (this._lampRestored) return;
+        this._lampRestored = true;
+        this.executeMergeSequence(() => {
+            this.applyJuice(this.lampSprite.node, this.fixedLampSF, () => {
+                this.scheduleOnce(() => {
+                    if (this.lightsNode) {
+                        this.lightsNode.active = true;
+                        this.lightsNode.setScale(0, 0, 0);
+                        tween(this.lightsNode).to(0.5, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' }).start();
+                    }
+                }, 0.15);
+            });
+        });
+    }
+
+    public restoreGarden() {
+        if (this._gardenRestored) return;
+        this._gardenRestored = true;
+        this.executeMergeSequence(() => {
+            tween(this.backgroundSprite.node)
+                .to(0.2, { scale: new Vec3(1.05, 1.05, 1) })
+                .call(() => { this.backgroundSprite.spriteFrame = this.fixedGardenSF; })
+                .to(0.4, { scale: new Vec3(1, 1, 1) }, { easing: 'sineOut' })
+                .start();
+        });
+    }
+
+    private applyJuice(target: Node, newSprite: SpriteFrame, callback?: Function) {
+        tween(target)
+            .to(0.2, { scale: new Vec3(0, 0, 1) }, { easing: 'sineIn' })
+            .call(() => {
+                const s = target.getComponent(Sprite);
+                if (s) s.spriteFrame = newSprite;
+                if (callback) callback();
+            })
+            .to(0.3, { scale: new Vec3(1.2, 1.2, 1) }, { easing: 'backOut' })
+            .to(0.15, { scale: new Vec3(1, 1, 1) })
+            .start();
     }
 }

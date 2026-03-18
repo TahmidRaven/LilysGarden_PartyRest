@@ -1,11 +1,11 @@
 import { _decorator, Component, Node, instantiate, Vec3, tween } from 'cc';
-import { DragAndDrop } from './DragAndDrop';
 import { GameManager } from './GameManager';
+import { DragAndDrop } from './DragAndDrop';
 const { ccclass, property } = _decorator;
 
 @ccclass('ItemLevelController')
 export class ItemLevelController extends Component {
-    @property public itemType: string = "chair";
+    @property public itemType: string = "table"; 
     @property public currentLevel: number = 0;
     public itemDatabase: any[] = []; 
 
@@ -16,15 +16,13 @@ export class ItemLevelController extends Component {
         if (data && data.levelPrefabs[nextLevel]) {
             const nextLevelPrefab = data.levelPrefabs[nextLevel];
             const newNode = instantiate(nextLevelPrefab);
-            
             newNode.parent = this.node.parent;
             newNode.setPosition(this.node.position);
 
-            newNode.setScale(new Vec3(0, 0, 0));
+            newNode.setScale(Vec3.ZERO);
             tween(newNode)
-                .to(0.15, { scale: new Vec3(1.4, 1.4, 1) }, { easing: 'sineOut' })
-                .to(0.1, { scale: new Vec3(0.9, 0.9, 1) }, { easing: 'sineIn' })
-                .to(0.15, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+                .to(0.15, { scale: new Vec3(1.3, 1.3, 1) }, { easing: 'sineOut' })
+                .to(0.1, { scale: new Vec3(1, 1, 1) })
                 .start();
 
             const newCtrl = newNode.getComponent(ItemLevelController);
@@ -36,18 +34,22 @@ export class ItemLevelController extends Component {
 
             const oldDrag = this.getComponent(DragAndDrop);
             const newDrag = newNode.getComponent(DragAndDrop);
-            if (oldDrag && newDrag) {
-                newDrag.grabLayer = oldDrag.grabLayer;
-            }
+            if (oldDrag && newDrag) newDrag.grabLayer = oldDrag.grabLayer;
 
-            if (GameManager.Instance) {
-                GameManager.Instance.advanceBackground();
-                if (nextLevel === 2) {
-                    GameManager.Instance.onFinalLevelReached();
-                }
+            // Restoration threshold reached (Level 2)
+            if (GameManager.Instance && nextLevel === 2) {
+                this.notifyManager();
             }
             
             this.node.destroy();
         }
+    }
+
+    private notifyManager() {
+        const type = this.itemType.toLowerCase();
+        // Matching logic for table/chair, lamp, and garden/flower
+        if (type === 'table' || type === 'chair') GameManager.Instance.restoreTable();
+        else if (type === 'lamp') GameManager.Instance.restoreLamp();
+        else if (type === 'garden' || type === 'flower') GameManager.Instance.restoreGarden();
     }
 }
