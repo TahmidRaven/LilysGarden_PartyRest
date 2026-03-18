@@ -32,8 +32,14 @@ export class GameManager extends Component {
 
     onLoad() { 
         GameManager.Instance = this; 
+        
+        // Hide the board holder immediately
+        if (this.boardHolderNode) {
+            this.boardHolderNode.active = false;
+            this._originalBoardPos = this.boardHolderNode.position.clone();
+        }
+        
         if (this.lightsNode) this.lightsNode.active = false;
-        if (this.boardHolderNode) this._originalBoardPos = this.boardHolderNode.position.clone();
     }
 
     start() {
@@ -43,8 +49,24 @@ export class GameManager extends Component {
     }
 
     private onFirstTouch() {
-        if (this.gameBoardController) this.gameBoardController.initBoard();
-        if (this.initialSceneNode) this.initialSceneNode.destroy();
+        if (this.boardHolderNode) {
+            // Make the board active
+            this.boardHolderNode.active = true;
+            
+            // Optional: Fade/Scale in for a "juicier" feel
+            this.boardHolderNode.setScale(new Vec3(0, 0, 0));
+            tween(this.boardHolderNode)
+                .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+                .start();
+        }
+
+        if (this.gameBoardController) {
+            this.gameBoardController.initBoard();
+        }
+        
+        if (this.initialSceneNode) {
+            this.initialSceneNode.destroy();
+        }
     }
 
     private setAllItemsPhysics(isKinematic: boolean) {
