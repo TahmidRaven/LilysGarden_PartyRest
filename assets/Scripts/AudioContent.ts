@@ -28,7 +28,6 @@ export class AudioContent extends Component {
     public AudioSource : AudioSource = null!;
 
     onLoad() {
-        // Ensure AudioSource exists and is configured based on properties
         this.AudioSource = this.getComponent(AudioSource) || this.addComponent(AudioSource);
         this.AudioSource.clip = this.AudioClip;
         this.AudioSource.loop = this.Loop;

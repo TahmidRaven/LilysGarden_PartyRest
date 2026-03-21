@@ -24,10 +24,7 @@ export class GameBoardController extends Component {
     @property(Node)
     public grabItemOnTop: Node = null; 
 
-    /**
-     * Initializes the board by spawning starting items (Level 0).
-     * Now includes 2 additional random spawns at the end of the sequence.
-     */
+
     public initBoard() {
         if (this.itemDatabase.length === 0 || !this.boardHolder) {
             console.warn("GameBoardController: itemDatabase is empty or boardHolder is not assigned.");
@@ -35,7 +32,7 @@ export class GameBoardController extends Component {
         }
 
         let count = 0;
-        // 1. Spawn the standard initial set (4 of each type)
+        //Spawn initial set (4 of each type)
         this.itemDatabase.forEach((itemGroup) => {
             for (let i = 0; i < 4; i++) {
                 const delay = count * 0.04; 
@@ -46,17 +43,13 @@ export class GameBoardController extends Component {
             }
         });
 
-        // 2. Spawn 2 extra random items after the main sequence finished
+        // Spawn 2 extra random items for no fucking reason 
         const finalDelay = count * 0.04;
         this.scheduleOnce(() => {
             this.spawnRandomItems(2);
         }, finalDelay);
     }
 
-    /**
-     * Public method to spawn a specific number of random Level 0 items.
-     * Can be called from other scripts (like ItemLevelController) after a merge.
-     */
     public spawnRandomItems(amount: number = 2) {
         if (this.itemDatabase.length === 0) return;
 
@@ -64,7 +57,7 @@ export class GameBoardController extends Component {
             const randomIndex = Math.floor(Math.random() * this.itemDatabase.length);
             const randomGroup = this.itemDatabase[randomIndex];
             
-            // Add a tiny stagger delay if spawning multiple
+            // A tiny stagger delay if spawning multiple
             this.scheduleOnce(() => {
                 this.spawnLevelZeroItem(randomGroup);
             }, i * 0.05);
@@ -78,7 +71,7 @@ export class GameBoardController extends Component {
         const newItem = instantiate(prefab);
         newItem.parent = this.boardHolder;
 
-        // --- Random Position Logic ---
+        // Random Position Logic 
         const uiTransform = this.boardHolder.getComponent(UITransform);
         if (uiTransform) {
             const randomX = (Math.random() - 0.5) * (uiTransform.contentSize.width * 0.8);
@@ -90,13 +83,13 @@ export class GameBoardController extends Component {
             newItem.setPosition(new Vec3(randomX, baseYSpan + randomYOffset, 0));
         }
 
-        // --- Spawning Animation ---
+        // Spawning Animation
         newItem.setScale(new Vec3(0, 0, 0));
         tween(newItem)
             .to(0.25, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
             .start();
 
-        // --- Data Injection ---
+
         const controller = newItem.getComponent(ItemLevelController);
         if (controller) {
             controller.itemType = group.typeName;
@@ -104,7 +97,7 @@ export class GameBoardController extends Component {
             controller.itemDatabase = this.itemDatabase; 
         }
 
-        // --- Drag & Drop Setup ---
+        // Drag & Drop Setup
         const dragScript = newItem.getComponent(DragAndDrop);
         if (dragScript) {
             dragScript.grabLayer = this.grabItemOnTop; 

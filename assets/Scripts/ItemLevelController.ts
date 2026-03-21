@@ -52,7 +52,7 @@ export class ItemLevelController extends Component {
 
     private notifyManager() {
         const type = this.itemType.toLowerCase();
-        // Matching logic for table/chair, lamp, and garden/flower
+        // Transition logic for table/chair, lamp, and garden/flower
         if (type === 'table' || type === 'chair') GameManager.Instance.restoreTable();
         else if (type === 'lamp') GameManager.Instance.restoreLamp();
         else if (type === 'garden' || type === 'flower') GameManager.Instance.restoreGarden();

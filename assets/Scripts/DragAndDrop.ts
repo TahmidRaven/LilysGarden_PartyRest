@@ -1,6 +1,6 @@
 import { _decorator, Component, Node, Vec3, EventTouch, RigidBody2D, ERigidBody2DType, Vec2, Collider2D, Contact2DType, IPhysics2DContact } from 'cc';
 import { ItemLevelController } from './ItemLevelController';
-import { GameManager } from './GameManager'; // Added for audio access
+import { GameManager } from './GameManager'; // for audio access
 
 const { ccclass, property } = _decorator;
 
@@ -89,7 +89,6 @@ export class DragAndDrop extends Component {
 
 if (!merged) {
             this.returnToBoard();
-            // Use the new playAudio string-based call
             if (GameManager.Instance) {
                 GameManager.Instance.playAudio("WrongMerge");
             }

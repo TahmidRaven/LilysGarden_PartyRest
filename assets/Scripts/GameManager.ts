@@ -37,7 +37,7 @@ export class GameManager extends Component {
     private _isTransitioning = false;
     private _originalBoardPos: Vec3 = new Vec3();
 
-    // Store original positions to calculate offsets correctly
+    // Storing original positions to calculate offsets
     private _logoOriginalPos: Vec3 = new Vec3();
     private _playNowOriginalPos: Vec3 = new Vec3();
 
@@ -54,7 +54,7 @@ export class GameManager extends Component {
         if (this.lightsNode) this.lightsNode.active = false;
         if (this.lilyNode) this.lilyNode.active = false; 
 
-        // Setup Top UI: Store positions and move them up 300 units
+        // move top UI up 300 units
         if (this.logoTop) {
             this._logoOriginalPos = this.logoTop.position.clone();
             this.logoTop.setPosition(this._logoOriginalPos.x, this._logoOriginalPos.y + 300, this._logoOriginalPos.z);
@@ -104,7 +104,7 @@ export class GameManager extends Component {
         [this.logoTop, this.playNowTop].forEach(node => {
             if (!node) return;
 
-            // Determine target: Original position for "show", Original + 300 for "hide"
+            // Original position for "show", Original + 300 for "hide"
             const original = (node === this.logoTop) ? this._logoOriginalPos : this._playNowOriginalPos;
             const targetY = show ? original.y : original.y + 300;
 
@@ -157,7 +157,7 @@ export class GameManager extends Component {
             });
 
         if (isFinalMerge) {
-            // Send UI back up before victory screen hits
+            // UI back up before victory screen hits
             this.animateTopUI(false);
 
             seq.delay(1.0)
@@ -186,7 +186,6 @@ export class GameManager extends Component {
         }
     }
 
-    // ... (Rest of the restoration methods remain the same)
     public restoreTable() {
         if (this._tableRestored) return;
         this._tableRestored = true;
