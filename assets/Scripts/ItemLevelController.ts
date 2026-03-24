@@ -24,11 +24,14 @@ export class ItemLevelController extends Component {
             newNode.parent = this.node.parent;
             newNode.setPosition(this.node.position);
 
-            newNode.setScale(Vec3.ZERO);
-            tween(newNode)
-                .to(0.15, { scale: new Vec3(1.3, 1.3, 1) }, { easing: 'sineOut' })
-                .to(0.1, { scale: new Vec3(1, 1, 1) })
-                .start();
+        const originalScale = newNode.scale.clone();
+        const popScale = new Vec3(originalScale.x * 1.3, originalScale.y * 1.3, originalScale.z);
+
+        newNode.setScale(Vec3.ZERO);
+        tween(newNode)
+            .to(0.15, { scale: popScale }, { easing: 'sineOut' })
+            .to(0.1, { scale: originalScale })
+            .start();
 
             const newCtrl = newNode.getComponent(ItemLevelController);
             if (newCtrl) {

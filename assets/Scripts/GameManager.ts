@@ -252,6 +252,9 @@ private dropChandelier() {
     }
 
     private applyJuice(target: Node, newSprite: SpriteFrame, callback?: Function) {
+        const originalScale = target.scale.clone();
+        const popScale = new Vec3(originalScale.x * 1.2, originalScale.y * 1.2, originalScale.z);
+
         tween(target)
             .to(0.2, { scale: new Vec3(0, 0, 1) }, { easing: 'sineIn' })
             .call(() => {
@@ -259,8 +262,8 @@ private dropChandelier() {
                 if (s) s.spriteFrame = newSprite;
                 if (callback) callback();
             })
-            .to(0.3, { scale: new Vec3(1.2, 1.2, 1) }, { easing: 'backOut' })
-            .to(0.15, { scale: new Vec3(1, 1, 1) })
+            .to(0.3, { scale: popScale }, { easing: 'backOut' })
+            .to(0.15, { scale: originalScale })
             .start();
     }
 }

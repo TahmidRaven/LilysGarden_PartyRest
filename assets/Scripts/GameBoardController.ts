@@ -84,9 +84,11 @@ export class GameBoardController extends Component {
         }
 
         // Spawning Animation
+        const originalScale = newItem.scale.clone();
         newItem.setScale(new Vec3(0, 0, 0));
+
         tween(newItem)
-            .to(0.25, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+            .to(0.25, { scale: originalScale }, { easing: 'backOut' })
             .start();
 
 
