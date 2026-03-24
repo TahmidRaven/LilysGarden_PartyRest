@@ -28,6 +28,9 @@ export class GameManager extends Component {
     @property(SpriteFrame) public fixedLampSF: SpriteFrame = null;
     @property(SpriteFrame) public fixedGardenSF: SpriteFrame = null;
 
+    @property(Node) public chandelierNode: Node = null;
+    @property(Node) public chandelierDropPos: Node = null;
+
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
 
@@ -192,21 +195,49 @@ export class GameManager extends Component {
         this.executeMergeSequence(() => this.applyJuice(this.tableSprite.node, this.fixedTableSF));
     }
 
-    public restoreLamp() {
-        if (this._lampRestored) return;
-        this._lampRestored = true;
-        this.executeMergeSequence(() => {
-            this.applyJuice(this.lampSprite.node, this.fixedLampSF, () => {
-                this.scheduleOnce(() => {
-                    if (this.lightsNode) {
-                        this.lightsNode.active = true;
-                        this.lightsNode.setScale(new Vec3(0, 0, 0));
-                        tween(this.lightsNode).to(0.5, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' }).start();
-                    }
-                }, 0.15);
-            });
+public restoreLamp() {
+    if (this._lampRestored) return;
+    this._lampRestored = true;
+
+    this.executeMergeSequence(() => {
+        this.applyJuice(this.lampSprite.node, this.fixedLampSF, () => {
+            // Fairy Lights 
+            if (this.lightsNode) {
+                this.lightsNode.active = true;
+                const anim = this.lightsNode.getComponent(Animation);
+                if (anim) {
+                    anim.play("FairyLightsAnim");
+                }
+            }
+
+            // Drop the Chandelier 
+            this.scheduleOnce(() => {
+                this.dropChandelier();
+            }, 0.65); 
         });
+    });
+}
+
+private dropChandelier() {
+    if (!this.chandelierNode || !this.chandelierDropPos) return;
+
+    this.chandelierNode.active = true;
+    
+    const targetWorldPos = this.chandelierDropPos.worldPosition;
+    const parentUI = this.chandelierNode.parent.getComponent(UITransform);
+    const targetLocalPos = new Vec3();
+    
+    if (parentUI) {
+        parentUI.convertToNodeSpaceAR(targetWorldPos, targetLocalPos);
     }
+
+    tween(this.chandelierNode)
+        .to(1.2, { position: targetLocalPos }, { easing: 'bounceOut' }) // heavey drop 
+        .call(() => {
+            this.playAudio("Merge"); 
+        })
+        .start();
+}
 
     public restoreGarden() {
         if (this._gardenRestored) return;
