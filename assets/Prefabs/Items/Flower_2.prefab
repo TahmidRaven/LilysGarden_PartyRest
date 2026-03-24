@@ -88,8 +88,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 256,
-      "height": 256
+      "width": 289,
+      "height": 204
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -125,7 +125,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "b8a57eee-fe16-4033-860b-e8694aa95339@f9941",
+      "__uuid__": "154355d0-7229-43fb-a6cc-755233a7f302@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -161,10 +161,6 @@
     },
     "itemType": "flower",
     "currentLevel": 1,
-    "mergeParticlePrefab": {
-      "__uuid__": "eea67d6d-53a8-46ff-8a5c-79bf1689c6bd",
-      "__expectedType__": "cc.Prefab"
-    },
     "_id": ""
   },
   {
@@ -194,7 +190,7 @@
       "x": 0,
       "y": 0
     },
-    "_radius": 96.9,
+    "_radius": 100,
     "_id": ""
   },
   {
@@ -276,7 +272,7 @@
       "x": 0,
       "y": 0
     },
-    "_radius": 85,
+    "_radius": 90,
     "_id": ""
   },
   {

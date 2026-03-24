@@ -88,8 +88,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 256,
-      "height": 256
+      "width": 223,
+      "height": 230
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -125,7 +125,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "d95e3752-e3c4-4d12-803e-9b798f39bc32@f9941",
+      "__uuid__": "ee64dce3-257e-4108-b342-da927246a30a@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -161,10 +161,6 @@
     },
     "itemType": "chair",
     "currentLevel": 0,
-    "mergeParticlePrefab": {
-      "__uuid__": "eea67d6d-53a8-46ff-8a5c-79bf1689c6bd",
-      "__expectedType__": "cc.Prefab"
-    },
     "_id": ""
   },
   {

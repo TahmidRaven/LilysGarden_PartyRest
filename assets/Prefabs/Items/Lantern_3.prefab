@@ -88,8 +88,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 256,
-      "height": 256
+      "width": 279,
+      "height": 238
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -125,7 +125,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "6a04f3e1-f4dc-4e32-a5f3-eba9582f0a93@f9941",
+      "__uuid__": "053b30c5-5745-4cc1-a542-243455468748@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -161,10 +161,6 @@
     },
     "itemType": "lamp",
     "currentLevel": 2,
-    "mergeParticlePrefab": {
-      "__uuid__": "eea67d6d-53a8-46ff-8a5c-79bf1689c6bd",
-      "__expectedType__": "cc.Prefab"
-    },
     "_id": ""
   },
   {
@@ -194,7 +190,7 @@
       "x": 0,
       "y": 9
     },
-    "_radius": 106,
+    "_radius": 120,
     "_id": ""
   },
   {
@@ -276,7 +272,7 @@
       "x": 0,
       "y": 0
     },
-    "_radius": 95,
+    "_radius": 100,
     "_id": ""
   },
   {
