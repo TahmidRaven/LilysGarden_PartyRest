@@ -36,6 +36,12 @@ export class GameManager extends Component {
     @property(Node) public flowerPos2: Node = null;
     @property(Node) public flowerPos3: Node = null;
 
+    @property(Prefab) public sparklePrefab: Prefab = null;
+
+    @property(Node) public TableSparklePos1: Node = null;
+    @property(Node) public TableSparklePos2: Node = null;
+    @property(Node) public TableSparklePos3: Node = null;
+
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
 
@@ -168,7 +174,7 @@ export class GameManager extends Component {
             // UI back up before victory screen hits
             this.animateTopUI(false);
 
-            seq.delay(1.0)
+            seq.delay(3.0)
                .call(() => {
                    if (this.lilyNode) {
                        this.lilyNode.active = true;
@@ -194,11 +200,35 @@ export class GameManager extends Component {
         }
     }
 
-    public restoreTable() {
-        if (this._tableRestored) return;
-        this._tableRestored = true;
-        this.executeMergeSequence(() => this.applyJuice(this.tableSprite.node, this.fixedTableSF));
-    }
+public restoreTable() {
+    if (this._tableRestored) return;
+    this._tableRestored = true;
+
+    this.executeMergeSequence(() => {
+        this.applyJuice(this.tableSprite.node, this.fixedTableSF, () => {
+            
+            const sparkleNodes = [
+                this.TableSparklePos1, 
+                this.TableSparklePos2, 
+                this.TableSparklePos3
+            ];
+            
+            sparkleNodes.forEach((posNode, index) => {
+                if (posNode) {
+                    this.scheduleOnce(() => {
+                        // Pass 2.0 for double size
+                        this.spawnSparkle(posNode, 2.0);
+                    }, index * 0.1); 
+                }
+            });
+
+            // Sparkle on the table itself at 2x size
+            this.spawnSparkle(this.tableSprite.node, 2.0);
+            
+            this.playAudio("Merge");
+        });
+    });
+}
 
 public restoreLamp() {
     if (this._lampRestored) return;
@@ -237,9 +267,17 @@ private dropChandelier() {
     }
 
     tween(this.chandelierNode)
-        .to(1.2, { position: targetLocalPos }, { easing: 'bounceOut' }) // heavey drop 
+        .to(1.2, { position: targetLocalPos }, { easing: 'bounceOut' }) 
         .call(() => {
             this.playAudio("Merge"); 
+
+            this.spawnSparkle(this.chandelierNode, 3.0);
+
+            for (let i = 0; i < 2; i++) {
+                this.scheduleOnce(() => {
+                    this.spawnSparkle(this.chandelierNode, 1.5);
+                }, 0.1 * (i + 1));
+            }
         })
         .start();
 }
@@ -249,7 +287,7 @@ private dropChandelier() {
         this._gardenRestored = true;
 
         this.executeMergeSequence(() => {
-            // 1. Background swap logic
+            // Background swap 
             tween(this.backgroundSprite.node)
                 .to(0.2, { scale: new Vec3(1.05, 1.05, 1) })
                 .call(() => { 
@@ -273,7 +311,8 @@ private dropChandelier() {
             flower.setPosition(0, 0, 0);
             
             const anim = flower.getComponent(Animation);
-            if (anim) anim.play("FlowerAnim"); 
+            if (anim) anim.play("FlowerAnim");
+            this.spawnSparkle(parentNode); 
         };
 
         // Play Pos 2 and 3 together
@@ -285,6 +324,29 @@ private dropChandelier() {
             spawnFlower(this.flowerPos1);
         }, 0.3);
     }
+
+
+private spawnSparkle(parentNode: Node, scale: number = 1.0) {
+    if (!parentNode || !this.sparklePrefab) return;
+
+    const sparkle = instantiate(this.sparklePrefab);
+    sparkle.parent = parentNode;
+    sparkle.setPosition(0, 0, 0);
+    
+    // pass 2x scale
+    sparkle.setScale(new Vec3(scale, scale, 1));
+
+    const anim = sparkle.getComponent(Animation);
+    if (anim) {
+        anim.play(); 
+    }
+
+    this.scheduleOnce(() => {
+        if (sparkle && sparkle.isValid) {
+            sparkle.destroy();
+        }
+    }, 2.0); 
+}
 
     private applyJuice(target: Node, newSprite: SpriteFrame, callback?: Function) {
         const originalScale = target.scale.clone();
