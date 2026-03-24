@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, instantiate, Vec3, tween } from 'cc';
 import { GameManager } from './GameManager';
 import { DragAndDrop } from './DragAndDrop';
+import { HandGuide } from './HandGuide';
 const { ccclass, property } = _decorator;
 
 @ccclass('ItemLevelController')
@@ -50,6 +51,15 @@ export class ItemLevelController extends Component {
             }
             
             this.node.destroy();
+
+            const handGuide = this.node.parent.parent.getComponentInChildren(HandGuide); 
+            if (handGuide) {
+                // We use a slight delay so the hand targets the NEWLY spawned nodes 
+                // after they have settled in the layout
+                this.scheduleOnce(() => {
+                    handGuide.triggerImmediateCheck();
+                }, 0.5); 
+                }
         }
     }
 

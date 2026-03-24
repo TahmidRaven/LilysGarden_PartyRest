@@ -225,7 +225,7 @@ public restoreTable() {
             // Sparkle on the table itself at 2x size
             this.spawnSparkle(this.tableSprite.node, 2.0);
             
-            this.playAudio("Merge");
+            this.playAudio("Sparkle");
         });
     });
 }
@@ -242,12 +242,14 @@ public restoreLamp() {
                 const anim = this.lightsNode.getComponent(Animation);
                 if (anim) {
                     anim.play("FairyLightsAnim");
+                    this.playAudio("Lights")
                 }
             }
 
             // Drop the Chandelier 
             this.scheduleOnce(() => {
                 this.dropChandelier();
+                this.playAudio("Sparkle");
             }, 0.65); 
         });
     });
@@ -269,7 +271,7 @@ private dropChandelier() {
     tween(this.chandelierNode)
         .to(1.2, { position: targetLocalPos }, { easing: 'bounceOut' }) 
         .call(() => {
-            this.playAudio("Merge"); 
+            // this.playAudio("Sparkle"); 
 
             this.spawnSparkle(this.chandelierNode, 3.0);
 
@@ -318,6 +320,8 @@ private dropChandelier() {
         // Play Pos 2 and 3 together
         spawnFlower(this.flowerPos2);
         spawnFlower(this.flowerPos3);
+
+        this.playAudio("Sparkle");
 
         // Play Pos 1 after the small staggered delay
         this.scheduleOnce(() => {
