@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType, Animation } from 'cc';
+import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UITransform, Widget, RigidBody2D, ERigidBody2DType, Animation, Prefab, instantiate } from 'cc';
 import { GameBoardController } from './GameBoardController';
 import { VictoryScreen } from './VictoryScreen';
 import { AudioContent } from './AudioContent';
@@ -30,6 +30,11 @@ export class GameManager extends Component {
 
     @property(Node) public chandelierNode: Node = null;
     @property(Node) public chandelierDropPos: Node = null;
+
+    @property(Prefab) public flowerPrefab: Prefab = null; 
+    @property(Node) public flowerPos1: Node = null;
+    @property(Node) public flowerPos2: Node = null;
+    @property(Node) public flowerPos3: Node = null;
 
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
@@ -242,13 +247,43 @@ private dropChandelier() {
     public restoreGarden() {
         if (this._gardenRestored) return;
         this._gardenRestored = true;
+
         this.executeMergeSequence(() => {
+            // 1. Background swap logic
             tween(this.backgroundSprite.node)
                 .to(0.2, { scale: new Vec3(1.05, 1.05, 1) })
-                .call(() => { this.backgroundSprite.spriteFrame = this.fixedGardenSF; })
+                .call(() => { 
+                    this.backgroundSprite.spriteFrame = this.fixedGardenSF; 
+                })
+                // Wait 0.3s AFTER the sprite swap before starting the flowers
+                .delay(0.3) 
+                .call(() => {
+                    this.startFlowerSpawning();
+                })
                 .to(0.4, { scale: new Vec3(1, 1, 1) }, { easing: 'sineOut' })
                 .start();
         });
+    }
+
+    private startFlowerSpawning() {
+        const spawnFlower = (parentNode: Node) => {
+            if (!parentNode || !this.flowerPrefab) return;
+            const flower = instantiate(this.flowerPrefab);
+            flower.parent = parentNode;
+            flower.setPosition(0, 0, 0);
+            
+            const anim = flower.getComponent(Animation);
+            if (anim) anim.play("FlowerAnim"); 
+        };
+
+        // Play Pos 2 and 3 together
+        spawnFlower(this.flowerPos2);
+        spawnFlower(this.flowerPos3);
+
+        // Play Pos 1 after the small staggered delay
+        this.scheduleOnce(() => {
+            spawnFlower(this.flowerPos1);
+        }, 0.3);
     }
 
     private applyJuice(target: Node, newSprite: SpriteFrame, callback?: Function) {
