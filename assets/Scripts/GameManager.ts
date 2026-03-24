@@ -2,6 +2,7 @@ import { _decorator, Component, Node, Sprite, SpriteFrame, Vec3, Vec2, tween, UI
 import { GameBoardController } from './GameBoardController';
 import { VictoryScreen } from './VictoryScreen';
 import { AudioContent } from './AudioContent';
+import {HandGuide} from  './HandGuide';
 
 const { ccclass, property } = _decorator;
 
@@ -41,6 +42,10 @@ export class GameManager extends Component {
     @property(Node) public TableSparklePos1: Node = null;
     @property(Node) public TableSparklePos2: Node = null;
     @property(Node) public TableSparklePos3: Node = null;
+
+    @property(HandGuide) public handGuide: HandGuide = null;
+    private _idleTimer: any = null;
+    private readonly IDLE_DELAY = 2.22;
 
     @property([AudioContent]) 
     public audioList: AudioContent[] = [];
@@ -93,24 +98,25 @@ export class GameManager extends Component {
             audio.play();
         }
     }
+private onFirstTouch() {
+    this.playAudio("BGM");
+    this.animateTopUI(true);
 
-    private onFirstTouch() {
-        this.playAudio("BGM");
-
-        // Drop down the Top UI
-        this.animateTopUI(true);
-
-        if (this.boardHolderNode) {
-            this.boardHolderNode.active = true;
-            this.boardHolderNode.setScale(new Vec3(0, 0, 0));
-            tween(this.boardHolderNode)
-                .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
-                .start();
-        }
-        if (this.gameBoardController) this.gameBoardController.initBoard();
-        if (this.initialSceneNode) this.initialSceneNode.destroy();
+    if (this.boardHolderNode) {
+        this.boardHolderNode.active = true;
+        this.boardHolderNode.setScale(new Vec3(0, 0, 0));
+        tween(this.boardHolderNode)
+            .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+            .start();
     }
+    
+    if (this.gameBoardController) this.gameBoardController.initBoard();
+    
+    // START THE TIMER HERE
+    this.notifyTouch(); 
 
+    if (this.initialSceneNode) this.initialSceneNode.destroy();
+}
     private animateTopUI(show: boolean) {
         const duration = 0.6;
         const easing = show ? 'backOut' : 'backIn';
@@ -148,6 +154,8 @@ export class GameManager extends Component {
 
         const widget = this.boardHolderNode.getComponent(Widget);
         if (widget) widget.enabled = false;
+
+        this.stopIdleTimer();    // HAND 
 
         this.setAllItemsPhysics(true);
 
@@ -195,6 +203,8 @@ export class GameManager extends Component {
                    this._isTransitioning = false;
                    if (widget) widget.enabled = true;
                    this.setAllItemsPhysics(false);
+
+                   this.startIdleTimer(); // HAND BACK ON
                })
                .start();
         }
@@ -239,10 +249,11 @@ public restoreLamp() {
             // Fairy Lights 
             if (this.lightsNode) {
                 this.lightsNode.active = true;
+                this.playAudio("Lights")
+
                 const anim = this.lightsNode.getComponent(Animation);
                 if (anim) {
                     anim.play("FairyLightsAnim");
-                    this.playAudio("Lights")
                 }
             }
 
@@ -274,6 +285,7 @@ private dropChandelier() {
             // this.playAudio("Sparkle"); 
 
             this.spawnSparkle(this.chandelierNode, 3.0);
+            this.playAudio("Sparkle");
 
             for (let i = 0; i < 2; i++) {
                 this.scheduleOnce(() => {
@@ -367,4 +379,29 @@ private spawnSparkle(parentNode: Node, scale: number = 1.0) {
             .to(0.15, { scale: originalScale })
             .start();
     }
+
+    private startIdleTimer() {
+    this.stopIdleTimer();
+    this._idleTimer = this.scheduleOnce(() => {
+        if (this.handGuide) this.handGuide.show();
+    }, this.IDLE_DELAY);
+}
+
+private stopIdleTimer() {
+    if (this._idleTimer) {
+        this.unschedule(this._idleTimer);
+        this._idleTimer = null;
+    }
+    if (this.handGuide) this.handGuide.hide();
+}
+
+// Global trigger to reset timer whenever a touch happens
+public notifyTouch() {
+    this.stopIdleTimer();
+    // Only restart timer if we aren't in a transition (restoring items)
+    if (!this._isTransitioning) {
+        this.startIdleTimer();
+    }
+}
+
 }

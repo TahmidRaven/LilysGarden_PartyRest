@@ -39,6 +39,10 @@ export class DragAndDrop extends Component {
     private onTouchStart(event: EventTouch) {
         this._isDragging = true;
         this._contactNodes.clear(); 
+
+        if (GameManager.Instance) {
+        GameManager.Instance.notifyTouch(); 
+        }
         
         if (this.grabLayer) {
             const worldPos = this.node.worldPosition.clone();

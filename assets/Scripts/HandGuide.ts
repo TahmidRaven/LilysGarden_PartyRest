@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, tween, Tween, UITransform } from 'cc';
+import { _decorator, Component, Node, Vec3, tween, Tween } from 'cc';
 import { ItemLevelController } from './ItemLevelController';
 import { GameManager } from './GameManager';
 
@@ -9,99 +9,88 @@ export class HandGuide extends Component {
     @property(Node)
     public boardHolder: Node = null!;
 
-    @property
-    public idleDelay: number = 3.0; // Time to wait before showing guide
-
     private _tween: Tween<Node> | null = null;
-    private _isGuiding: boolean = false;
-    private _lastTouchTime: number = 0;
+    private _isShowing: boolean = false;
 
-    start() {
-        this.node.active = false;
-        this._lastTouchTime = Date.now();
-        
-        // Listen for touches globally to reset the timer
-        this.node.parent?.on(Node.EventType.TOUCH_START, this.resetTimer, this);
-    }
+private findMergePair(): { start: Node, end: Node } | null {
+    if (!this.boardHolder) return null;
 
-    public triggerImmediateCheck() {
-        this._lastTouchTime = 0; // Force the idle check to pass in the next update
-        this.showGuide();
-    }
+    // 1. Get all items and sort them by level (Highest first)
+    const items = this.boardHolder.getComponentsInChildren(ItemLevelController)
+        .sort((a, b) => b.currentLevel - a.currentLevel);
+    
+    // 2. Search for the first valid pair in the sorted list
+    for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+            const itemA = items[i];
+            const itemB = items[j];
 
-    update(dt: number) {
-        if (this._isGuiding) return;
-
-        // Check if user has been idle
-        const currentTime = Date.now();
-        if (currentTime - this._lastTouchTime > this.idleDelay * 1000) {
-            this.showGuide();
-        }
-    }
-
-    private resetTimer() {
-        this._lastTouchTime = Date.now();
-        this.stopGuide();
-    }
-
-    private showGuide() {
-        const pair = this.findValidMergePair();
-        if (pair) {
-            this._isGuiding = true;
-            this.node.active = true;
-            this.animateHand(pair.startNode, pair.endNode);
-        }
-    }
-
-    private stopGuide() {
-        this._isGuiding = false;
-        this.node.active = false;
-        if (this._tween) {
-            this._tween.stop();
-            this._tween = null;
-        }
-    }
-
-    private findValidMergePair(): { startNode: Node, endNode: Node } | null {
-        if (!this.boardHolder) return null;
-
-        const items = this.boardHolder.getComponentsInChildren(ItemLevelController);
-        
-        // Loop through items to find two that match type and level
-        for (let i = 0; i < items.length; i++) {
-            for (let j = i + 1; j < items.length; j++) {
-                const a = items[i];
-                const b = items[j];
-
-                if (a.itemType === b.itemType && a.currentLevel === b.currentLevel && a.currentLevel < 2) {
-                    return { startNode: a.node, endNode: b.node };
-                }
+            if (
+                itemA.itemType === itemB.itemType &&
+                itemA.currentLevel === itemB.currentLevel &&
+                itemA.currentLevel < 2 // Level 2 items are usually "final" targets
+            ) {
+                // Return the first match found (which will be the highest level)
+                return { start: itemA.node, end: itemB.node };
             }
         }
-        return null;
     }
+    return null;
+}
 
-    private animateHand(startNode: Node, endNode: Node) {
-        const startPos = this.convertToLocalPos(startNode.worldPosition);
-        const endPos = this.convertToLocalPos(endNode.worldPosition);
+public show() {
 
-        this.node.setPosition(startPos);
+    if (this._isShowing || (GameManager.Instance && GameManager.Instance["_isTransitioning"])) {
+        return;
+    }
+    
+    const pair = this.findMergePair();
+    if (!pair) return; 
+
+    this._isShowing = true;
+    this.node.active = true;
+
+    this.playSequence(pair.start, pair.end);
+}
+
+    private playSequence(startNode: Node, endNode: Node) {
+        if (this._tween) this._tween.stop();
+
+        // We use a function to get position so it stays accurate if the board moves
+        const getStartPos = () => startNode.worldPosition;
+        const getEndPos = () => endNode.worldPosition;
+
+        this.node.setWorldPosition(getStartPos());
 
         this._tween = tween(this.node)
             .repeatForever(
                 tween()
-                    .set({ position: startPos, scale: new Vec3(1.2, 1.2, 1) })
-                    .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'sineOut' }) // "Press" effect
-                    .to(1.2, { position: endPos }, { easing: 'quadInOut' })
-                    .to(0.2, { scale: new Vec3(1.2, 1.2, 1) }) // "Release" effect
+                    // 1. Reset to start
+                    .call(() => {
+                        this.node.setWorldPosition(getStartPos());
+                        this.node.setScale(new Vec3(1.2, 1.2, 1));
+                    })
+                    // 2. "Press" down animation
+                    .to(0.3, { scale: new Vec3(0.8, 0.8, 1) }, { easing: 'sineOut' })
+                    // 3. Move to target using worldPosition
+                    .parallel(
+                        tween().to(1.0, { worldPosition: getEndPos() }, { easing: 'quadInOut' }),
+                        tween().to(1.0, { scale: new Vec3(1, 1, 1) })
+                    )
+                    // 4. "Release" animation
+                    .to(0.2, { scale: new Vec3(1.2, 1.2, 1) }, { easing: 'sineIn' })
                     .delay(0.5)
             )
             .start();
     }
 
-    private convertToLocalPos(worldPos: Vec3): Vec3 {
-        const uiTransform = this.node.parent!.getComponent(UITransform)!;
-        return uiTransform.convertToNodeSpaceAR(worldPos);
+
+    public hide() {
+        this._isShowing = false;
+        if (this._tween) {
+            this._tween.stop();
+            this._tween = null;
+        }
+        this.node.active = false;
     }
 }
-
