@@ -23,7 +23,7 @@
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 282
+      "__id__": 281
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -54,7 +54,7 @@
     },
     "autoReleaseAssets": false,
     "_globals": {
-      "__id__": 283
+      "__id__": 282
     },
     "_id": "850a0ad0-1050-47c2-8593-2b708e80d9b1"
   },
@@ -101,13 +101,13 @@
     "_active": true,
     "_components": [
       {
+        "__id__": 278
+      },
+      {
         "__id__": 279
       },
       {
         "__id__": 280
-      },
-      {
-        "__id__": 281
       }
     ],
     "_prefab": null,
@@ -6755,16 +6755,13 @@
       },
       {
         "__id__": 277
-      },
-      {
-        "__id__": 278
       }
     ],
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
-      "y": -350.379,
+      "x": 1917.95,
+      "y": -577.722,
       "z": 0
     },
     "_lrot": {
@@ -6850,22 +6847,6 @@
     "_useGrayscale": false,
     "_atlas": null,
     "_id": "bd+l3pV1dIG7AUkWhj051I"
-  },
-  {
-    "__type__": "6e41bbEY65D/aHICJhZlblQ",
-    "_name": "",
-    "_objFlags": 0,
-    "__editorExtras__": {},
-    "node": {
-      "__id__": 275
-    },
-    "_enabled": true,
-    "__prefab": null,
-    "boardHolder": {
-      "__id__": 73
-    },
-    "idleDelay": 3,
-    "_id": "a09/wW2D1J6pc7U5FL/Pcx"
   },
   {
     "__type__": "cc.UITransform",
@@ -6969,28 +6950,28 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 284
+      "__id__": 283
     },
     "shadows": {
-      "__id__": 285
+      "__id__": 284
     },
     "_skybox": {
-      "__id__": 286
+      "__id__": 285
     },
     "fog": {
-      "__id__": 287
+      "__id__": 286
     },
     "octree": {
-      "__id__": 288
+      "__id__": 287
     },
     "skin": {
-      "__id__": 289
+      "__id__": 288
     },
     "lightProbeInfo": {
-      "__id__": 290
+      "__id__": 289
     },
     "postSettings": {
-      "__id__": 291
+      "__id__": 290
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false
