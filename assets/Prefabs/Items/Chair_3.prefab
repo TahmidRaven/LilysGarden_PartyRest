@@ -187,10 +187,10 @@
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
+      "x": 8.1,
+      "y": -0.1
     },
-    "_radius": 114.3,
+    "_radius": 123.4,
     "_id": ""
   },
   {
@@ -269,10 +269,10 @@
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
+      "x": 6.2,
+      "y": 3.5
     },
-    "_radius": 100,
+    "_radius": 103.9,
     "_id": ""
   },
   {
@@ -288,6 +288,7 @@
       "__id__": 0
     },
     "fileId": "63/uUhzDlBUZ4UBVG5kcy3",
+    "instance": null,
     "targetOverrides": null
   }
 ]

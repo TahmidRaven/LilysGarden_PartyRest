@@ -190,7 +190,7 @@
       "x": 0,
       "y": 0
     },
-    "_radius": 114.3,
+    "_radius": 120.6,
     "_id": ""
   },
   {
@@ -272,7 +272,7 @@
       "x": 0,
       "y": 0
     },
-    "_radius": 100,
+    "_radius": 106,
     "_id": ""
   },
   {
@@ -288,6 +288,7 @@
       "__id__": 0
     },
     "fileId": "b7NEye5J9Gx575famlG/uZ",
+    "instance": null,
     "targetOverrides": null
   }
 ]

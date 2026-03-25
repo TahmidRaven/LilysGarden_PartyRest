@@ -188,9 +188,9 @@
     "_offset": {
       "__type__": "cc.Vec2",
       "x": -1.4,
-      "y": -8.3
+      "y": -3.1
     },
-    "_radius": 127,
+    "_radius": 129.5,
     "_id": ""
   },
   {
@@ -272,7 +272,7 @@
       "x": 0,
       "y": -5.9
     },
-    "_radius": 100,
+    "_radius": 106.2,
     "_id": ""
   },
   {
@@ -288,6 +288,6 @@
       "__id__": 0
     },
     "fileId": "a4D14hwCBLpLem+vi7dlZ8",
-    "targetOverrides": null
+    "instance": null
   }
 ]

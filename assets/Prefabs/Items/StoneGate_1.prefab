@@ -187,10 +187,10 @@
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0.1
+      "x": -4.3,
+      "y": -12.2
     },
-    "_radius": 95,
+    "_radius": 100.6,
     "_id": ""
   },
   {
@@ -269,8 +269,8 @@
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
+      "x": -3.2,
+      "y": -2.7
     },
     "_radius": 85,
     "_id": ""
@@ -288,6 +288,7 @@
       "__id__": 0
     },
     "fileId": "dadJNgFuxEnY/xNGMZhml4",
+    "instance": null,
     "targetOverrides": null
   }
 ]
