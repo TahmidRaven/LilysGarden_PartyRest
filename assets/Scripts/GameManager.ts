@@ -3,6 +3,7 @@ import { GameBoardController } from './GameBoardController';
 import { VictoryScreen } from './VictoryScreen';
 import { AudioContent } from './AudioContent';
 import {HandGuide} from  './HandGuide';
+import { AdEvent, AdManager } from '../ScriptsReusable/AdManager';
 
 const { ccclass, property } = _decorator;
 
@@ -62,7 +63,8 @@ export class GameManager extends Component {
 
     public static Instance: GameManager = null;
 
-    onLoad() { 
+    onLoad() {
+        AdManager.gameReady() 
         GameManager.Instance = this;
         
         if (this.boardHolderNode) {
@@ -101,6 +103,7 @@ export class GameManager extends Component {
 private onFirstTouch() {
     this.playAudio("BGM");
     this.animateTopUI(true);
+    AdManager.emit(AdEvent.START);
 
     if (this.boardHolderNode) {
         this.boardHolderNode.active = true;

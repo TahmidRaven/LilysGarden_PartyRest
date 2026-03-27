@@ -27,6 +27,7 @@ export class VictoryScreen extends Component {
     public show(isWin: boolean = true) {
         this.initializeComponents();
         this.node.active = true;
+        AdManager.gameEnd();
         
         if (this.node.parent) {
             this.node.setSiblingIndex(this.node.parent.children.length - 1);
