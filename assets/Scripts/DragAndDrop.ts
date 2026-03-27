@@ -60,13 +60,13 @@ export class DragAndDrop extends Component {
 private onTouchMove(event: EventTouch) {
     if (!this._isDragging) return;
 
-    // 1. Get the UI location (screen space)
+    // Get the UI location (screen space)
     const touchPos = event.getUILocation();
     
-    // 2. Convert to a 3D vector for the world position
+    // Convert to a 3D vector for the world position
     const worldPos = v3(touchPos.x, touchPos.y, 0);
 
-    // 3. Set the node's world position directly
+    // Set the node's world position directly
     this.node.setWorldPosition(worldPos);
 }
 

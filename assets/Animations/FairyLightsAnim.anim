@@ -72,7 +72,7 @@
     ],
     "_values": [
       {
-        "__uuid__": "7fa9513d-d53e-4c62-a988-9c629292366a@f9941",
+        "__uuid__": "072db21e-e29f-474d-bc05-50b7458c5619@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
@@ -80,7 +80,7 @@
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "7fa9513d-d53e-4c62-a988-9c629292366a@f9941",
+        "__uuid__": "072db21e-e29f-474d-bc05-50b7458c5619@f9941",
         "__expectedType__": "cc.SpriteFrame"
       },
       {
@@ -88,7 +88,7 @@
         "__expectedType__": "cc.SpriteFrame"
       },
       {
-        "__uuid__": "7fa9513d-d53e-4c62-a988-9c629292366a@f9941",
+        "__uuid__": "072db21e-e29f-474d-bc05-50b7458c5619@f9941",
         "__expectedType__": "cc.SpriteFrame"
       }
     ]
@@ -146,9 +146,7 @@
         "leftTangent": 0,
         "leftTangentWeight": 1,
         "easingMethod": 0,
-        "__editorExtras__": {
-          "tangentMode": 0
-        }
+        "__editorExtras__": null
       }
     ],
     "preExtrapolation": 1,
@@ -176,9 +174,7 @@
         "leftTangent": 0,
         "leftTangentWeight": 1,
         "easingMethod": 0,
-        "__editorExtras__": {
-          "tangentMode": 0
-        }
+        "__editorExtras__": null
       }
     ],
     "preExtrapolation": 1,
