@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, EventTouch, RigidBody2D, ERigidBody2DType, Vec2, Collider2D, Contact2DType, IPhysics2DContact } from 'cc';
+import { _decorator, Component, Node, Vec3, EventTouch, RigidBody2D, ERigidBody2DType, Vec2, Collider2D, Contact2DType, IPhysics2DContact, v3 } from 'cc';
 import { ItemLevelController } from './ItemLevelController';
 import { GameManager } from './GameManager'; // for audio access
 
@@ -57,12 +57,18 @@ export class DragAndDrop extends Component {
         }
     }
 
-    private onTouchMove(event: EventTouch) {
-        if (!this._isDragging) return;
-        const d = event.getDelta();
-        const worldPos = this.node.worldPosition;
-        this.node.setWorldPosition(worldPos.x + d.x, worldPos.y + d.y, worldPos.z);
-    }
+private onTouchMove(event: EventTouch) {
+    if (!this._isDragging) return;
+
+    // 1. Get the UI location (screen space)
+    const touchPos = event.getUILocation();
+    
+    // 2. Convert to a 3D vector for the world position
+    const worldPos = v3(touchPos.x, touchPos.y, 0);
+
+    // 3. Set the node's world position directly
+    this.node.setWorldPosition(worldPos);
+}
 
     private onTouchEnd(event: EventTouch) {
         if (!this._isDragging) return;

@@ -2123,7 +2123,7 @@
       "__expectedType__": "cc.SpriteFrame"
     },
     "fixedGardenSF": {
-      "__uuid__": "2a71977a-89bd-4581-bc7e-a2abecfbff81@f9941",
+      "__uuid__": "a80f520a-5c61-4345-a391-00426dadd586@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "chandelierNode": {
@@ -2970,7 +2970,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 2000,
+      "width": 3499,
       "height": 100
     },
     "_anchorPoint": {
@@ -3003,7 +3003,7 @@
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 2000,
+      "width": 3400,
       "height": 100
     },
     "_id": "ae8uOAUglEOJyVmpFGtNjd"

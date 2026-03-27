@@ -104,6 +104,7 @@ private onFirstTouch() {
     this.playAudio("BGM");
     this.animateTopUI(true);
     AdManager.emit(AdEvent.START);
+    AdManager.emit(AdEvent.CLICK); // Emit click event on first touch as well 
 
     if (this.boardHolderNode) {
         this.boardHolderNode.active = true;
